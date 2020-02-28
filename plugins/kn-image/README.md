@@ -1,8 +1,9 @@
-# Kn service build and deploy plugin
+# kn image plugin
 
-## Prequirement
+## Prerequisite
 Before you begin this task, you should prepare a kubernetes cluster which has been installed tekton-pipeline and access it.
 ### Confirm tekton-pipeline has been installed
+
 ```
 > kubectl get pod -n tekton-pipelines
 NAME                                           READY   STATUS    RESTARTS   AGE
@@ -19,6 +20,7 @@ Please create the build task first from https://github.com/tektoncd/catalog
 - Download yaml from https://github.com/tektoncd/catalog/blob/master/buildpacks/buildpacks-v3.yaml as buildpacks-v3.yaml
 - `kubectl apply -f buildpacks-v3.yaml`
 You can use `kubectl get task` command to see the task. It's output should like below:
+
 ```
 NAME            AGE
 buildpacks-v3   4d21h
@@ -46,11 +48,13 @@ metadata:
 type: kubernetes.io/basic-auth
 ```
 Run it with:
+
 ```
 kubetl create -f ImagePushSecret.yaml
 ```
 ### Secret for pulling image
 Besides, if your cluster account is not same with the account of container registry. Then maybe you also need to prepare another secret for pulling an image. Create a pull image secret called `ibm-cr-pull-secret`.
+
 ```
 kubectl create secret docker-registry ibm-cr-pull-secret --docker-server=us.icr.io --docker-username=iamapikey --docker-password=${apikey} --docker-email=me@here.com
 ```
@@ -58,6 +62,7 @@ Note: docker-password is the apikey of the account of container registry
 
 ## Create a ServiceAccount
 Create a seviceaccount yaml file named `sa.yaml`
+
 ```
 apiVersion: v1
 imagePullSecrets:
@@ -70,14 +75,16 @@ secrets:
 - name: ibm-cr-push-secret
 ```
 Run it with:
+
 ```
 kubectl create -f sa.yaml
 ```
 
 ## Deploy Knative service by using buildpacks builder task
 You can use `deploy` command line interface to deploy the image.
+
 ```
-  kn-image deploy ${image_name} \
+  kn image deploy ${image_name} \
     --builder buildpacks-v3 \
     --git-url ${url_of_git_repo} \
     --git-revision ${revision_of_git_repo} \
@@ -98,8 +105,9 @@ Now, we have 8 parameters, they are:
 ## Redeploy Knative service
 Sometimes, we want to modify some parameters and redeploy this image. Then we can use `redeploy` CLI to achieve our targets.
 For example, we only want to change the git-revision, then we can simply use below command to come true:
+
 ```
-  kn-image redeploy ${image_name} \
+  kn image redeploy ${image_name} \
     --saved-image ${new_path_of_generated_image} \
     --git-revision ${new-revision} \
     --namespcae ${namespace}
@@ -107,8 +115,9 @@ For example, we only want to change the git-revision, then we can simply use bel
 
 ## Deploy Knative service by kaniko builder task
 You can also use `kaniko` builder to deploy images, all steps are same with `buildpacks`. Below is an example about the deployment using kaniko:
+
 ```
-  kn-image deploy kanikotest \
+  kn image deploy kanikotest \
     --builder kaniko \
     --git-url https://github.com/bluebosh/knap-example \
     --saved-image us.icr.io/knative_jordan/kanikotest:latest \
@@ -116,9 +125,10 @@ You can also use `kaniko` builder to deploy images, all steps are same with `bui
     --force
 ```
 
-## Example
+## Example Workflow
 There will provide an example to deploy and reploy an image
 1. Create a CR namespace to store images
+
 ```
 ibmcloud login
 ibmcloud cr login
@@ -127,6 +137,7 @@ ibmcloud cr namespace-add $CR_NAMESPACE
 ```
 
 2. Access your cluster has been instlled tekton-pipeline
+
 ```
 ibmcloud login
 ibmcloud ks cluster-config --cluster ${cluster_name}
@@ -135,11 +146,12 @@ ibmcloud ks cluster-config --cluster ${cluster_name}
 3. Use buildpacks-v3 builder to deploy an image named `kntest` and push it to `us.icr.io/knative_test/kntest:v1`
 
 ```
-kn-image deploy kntest --builder buildpacks-v3 --git-url https://github.com/zhangtbj/cf-sample-app-go --git-revision master --saved-image us.icr.io/knative_test/kntest:v1 --serviceaccount pipeline-account --force
+kn image deploy kntest --builder buildpacks-v3 --git-url https://github.com/zhangtbj/cf-sample-app-go --git-revision master --saved-image us.icr.io/knative_test/kntest:v1 --serviceaccount pipeline-account --force
 ```
 Command result:
+
 ```
-> ./kn-image deploy kntest --builder buildpacks-v3 --git-url https://github.com/zhangtbj/cf-sample-app-go --git-revision master --saved-image us.icr.io/knative_jordan/kntest:v1 --serviceaccount pipeline-account --force
+kn image deploy kntest --builder buildpacks-v3 --git-url https://github.com/zhangtbj/cf-sample-app-go --git-revision master --saved-image us.icr.io/knative_jordan/kntest:v1 --serviceaccount pipeline-account --force
 
 [INFO] Deploy from git repository to Knative service
 [INFO] Building image kntest in namespace default
@@ -166,6 +178,7 @@ Command result:
 ```
 
 4. View all resources and related logs
+
 ```
 kubectl get pipelineresource
 kubectl get taskrun
@@ -173,6 +186,7 @@ kubectl logs ${pod_name} --all-containers=true
 ```
 5. Access the knative service
 If deploy successfully, then you can see a url and open it. It's output like below:
+
 ```
 kubectl get ksvc
 NAME     URL                                                                                                                    LATESTCREATED   LATESTREADY    READY   REASON
@@ -182,15 +196,18 @@ Helloworld from master branch!
 ```
 
 6. Reploy above image and Access the knative service
+
 ```
-kn-image redeploy kntest --git-revision develop --saved-image us.icr.io/knative_test/kntest:v2 --namespace default
+kn image redeploy kntest --git-revision develop --saved-image us.icr.io/knative_test/kntest:v2 --namespace default
 ```
 For the redeployed image, we change the git-revision from master to develop. At the same, we access the knative service, it should be changed into:
+
 ```
 Helloworld from develop branch!
 ```
 
 Command Result:
+
 ```
 [INFO] Redeploy Knative service by special settings
 [INFO] Building image kntest in namespace default
