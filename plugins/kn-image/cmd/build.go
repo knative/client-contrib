@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/knative/client-contrib/plugins/kn-image/tekton"
+	"github.com/knative/client-contrib/plugins/kn-image/clients"
 	"github.com/spf13/cobra"
 	tektoncdclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // from https://github.com/kubernetes/client-go/issues/345
@@ -67,7 +67,7 @@ var buildCmd = &cobra.Command{
 			fmt.Println("[ERROR] Building kubeconfig error:", err)
 			os.Exit(1)
 		}
-		tektonClient := tekton.NewTektonClient(client.TektonV1alpha1(), namespace)
+		tektonClient := clients.NewTektonClient(client.TektonV1alpha1(), namespace)
 
 		builder := cmd.Flag("builder").Value.String()
 		if builder == "" {

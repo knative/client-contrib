@@ -1,4 +1,4 @@
-package tekton
+package clients
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 
 const (
 	BuildpacksBuilderName  = "buildpacks-v3"
-	BuildpacksBuilderImage = "bluebosh/cnb:bionic"
+	BuildpacksBuilderImage = "cloudfoundry/cnb:bionic"
 	KanikoBuilderName      = "kaniko"
 	KanikoBuilderImage     = "gcr.io/kaniko-project/executor:v0.13.0"
 	BuildTimeout           = 300

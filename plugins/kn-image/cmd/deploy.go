@@ -17,16 +17,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/knative/client-contrib/plugins/kn-image/tekton"
-	servingclientset_v1alpha1 "github.com/knative/client/pkg/serving/v1alpha1"
-	serving_v1alpha1_api "github.com/knative/serving/pkg/apis/serving/v1alpha1"
-	serving_v1beta1_api "github.com/knative/serving/pkg/apis/serving/v1beta1"
+	"github.com/knative/client-contrib/plugins/kn-image/clients"
 	serviceclientset "github.com/knative/serving/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
 	tektoncdclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
-	corev1 "k8s.io/api/core/v1"
-	api_errors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // from https://github.com/kubernetes/client-go/issues/345
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
@@ -68,7 +62,7 @@ var deployCmd = &cobra.Command{
 			fmt.Println("[ERROR] Building kubeconfig error:", err)
 			os.Exit(1)
 		}
-		tektonClient := tekton.NewTektonClient(client.TektonV1alpha1(), namespace)
+		tektonClient := clients.NewTektonClient(client.TektonV1alpha1(), namespace)
 
 		builder := cmd.Flag("builder").Value.String()
 		if builder == "" {
@@ -114,8 +108,8 @@ var deployCmd = &cobra.Command{
 		}
 
 		fmt.Println("\n[INFO] Deploy the Knative service by using the new generated image")
-		servingClient := servingclientset_v1alpha1.NewKnServingClient(knclient.ServingV1alpha1(), namespace)
-		serviceExists, service, err := serviceExists(servingClient, name)
+		servingClient := clients.NewServingClient(knclient.ServingV1(), namespace)
+		serviceExists, service, err := servingClient.ServiceExists(name)
 		if err != nil {
 			fmt.Println("[ERROR] Checking service exist:", err)
 			os.Exit(1)
@@ -123,7 +117,7 @@ var deployCmd = &cobra.Command{
 		action := "created"
 		if serviceExists {
 			if force {
-				err = replaceService(servingClient, service, image, serviceAccount)
+				err = servingClient.UpdateService(service, image, serviceAccount)
 				action = "replaced"
 			} else {
 				fmt.Println(
@@ -133,13 +127,13 @@ var deployCmd = &cobra.Command{
 			}
 		} else {
 			if service == nil {
-				service, err = constructService(name, image, serviceAccount, namespace)
+				service = servingClient.ConstructService(name, image, serviceAccount, namespace)
 			}
 			if err != nil {
 				fmt.Println("[ERROR] Constructing service:", err)
 				os.Exit(1)
 			}
-			err = createService(servingClient, service)
+			err = servingClient.CreateService(service)
 		}
 		if err != nil {
 			fmt.Println("[ERROR] Create service:", err)
@@ -156,7 +150,7 @@ var deployCmd = &cobra.Command{
 				fmt.Println("[INFO] service", name,"is ready")
 				url := service.Status.URL.String()
 				if url == "" {
-					url = service.Status.DeprecatedDomain
+					url = service.Status.URL.String()
 				}
 				fmt.Println("[INFO] Service", name,"url is", url)
 				return
@@ -185,92 +179,4 @@ func init() {
 	deployCmd.Flags().StringP("serviceaccount", "s", "default", "service account to push image")
 	deployCmd.Flags().StringP( "namespace", "n","default", "namespace of build")
 	deployCmd.Flags().BoolP("force", "f", false, "Create service forcefully, replaces existing service if any")
-}
-
-// Create a new Knative service
-func createService(client servingclientset_v1alpha1.KnClient, service *serving_v1alpha1_api.Service) error {
-	err := client.CreateService(service)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Replace the existing Knative service
-func replaceService(client servingclientset_v1alpha1.KnClient, service *serving_v1alpha1_api.Service, image, serviceAccount string) error {
-	var retries = 0
-	for {
-		service.Spec = serving_v1alpha1_api.ServiceSpec{
-			ConfigurationSpec:    serving_v1alpha1_api.ConfigurationSpec{
-				Template: &serving_v1alpha1_api.RevisionTemplateSpec{
-					Spec: serving_v1alpha1_api.RevisionSpec{
-						RevisionSpec: serving_v1beta1_api.RevisionSpec{
-							PodSpec: serving_v1beta1_api.PodSpec{
-								ServiceAccountName: serviceAccount,
-								Containers: []corev1.Container{
-									{
-										Image: image,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-		err := client.UpdateService(service)
-		if err != nil {
-			// Retry to update when a resource version conflict exists
-			if api_errors.IsConflict(err) && retries < MaxUpdateRetries {
-				retries++
-				continue
-			}
-			return err
-		}
-		return nil
-	}
-}
-
-// Check if the service exists
-func serviceExists(client servingclientset_v1alpha1.KnClient, name string) (bool, *serving_v1alpha1_api.Service, error) {
-	service, err := client.GetService(name)
-	if api_errors.IsNotFound(err) {
-		return false, nil, nil
-	}
-	if err != nil {
-		return false, nil, err
-	}
-	return true, service, nil
-}
-
-// Create service struct from provided options
-func constructService(name, image, serviceAccount, namespace string) (*serving_v1alpha1_api.Service,
-	error) {
-
-	service := serving_v1alpha1_api.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: serving_v1alpha1_api.ServiceSpec{
-			ConfigurationSpec:    serving_v1alpha1_api.ConfigurationSpec{
-				Template: &serving_v1alpha1_api.RevisionTemplateSpec{
-					Spec: serving_v1alpha1_api.RevisionSpec{
-						RevisionSpec: serving_v1beta1_api.RevisionSpec{
-							PodSpec: serving_v1beta1_api.PodSpec{
-								ServiceAccountName: serviceAccount,
-								Containers: []corev1.Container{
-									{
-										Image: image,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return &service, nil
 }

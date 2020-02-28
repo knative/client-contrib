@@ -17,8 +17,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/knative/client-contrib/plugins/kn-image/tekton"
-	servingclientset_v1alpha1 "github.com/knative/client/pkg/serving/v1alpha1"
+	"github.com/knative/client-contrib/plugins/kn-image/clients"
 	serviceclientset "github.com/knative/serving/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
 	tektoncdclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -68,7 +67,7 @@ var redeployCmd = &cobra.Command{
 			fmt.Println("[ERROR] Building kubeconfig error:", err)
 			os.Exit(1)
 		}
-		tektonClient := tekton.NewTektonClient(client.TektonV1alpha1(), namespace)
+		tektonClient := clients.NewTektonClient(client.TektonV1alpha1(), namespace)
 
 		builder := cmd.Flag("builder").Value.String()
 		if builder == "" {
@@ -167,25 +166,25 @@ var redeployCmd = &cobra.Command{
 		}
 
 		fmt.Println("\n[INFO] Redeploy the Knative service by using the new generated image")
-		servingClient := servingclientset_v1alpha1.NewKnServingClient(knclient.ServingV1alpha1(), namespace)
-		serviceExists, service, err := serviceExists(servingClient, name)
+		servingClient := clients.NewServingClient(knclient.ServingV1(), namespace)
+		serviceExists, service, err := servingClient.ServiceExists(name)
 		if err != nil {
 			fmt.Println("[ERROR] Checking service exist:", err)
 			os.Exit(1)
 		}
 		action := "created"
 		if serviceExists {
-			err = replaceService(servingClient, service, image, serviceAccount)
+			err = servingClient.UpdateService(service, image, serviceAccount)
 			action = "replaced"
 		} else {
 			if service == nil {
-				service, err = constructService(name, image, serviceAccount, namespace)
+				service = servingClient.ConstructService(name, image, serviceAccount, namespace)
 			}
 			if err != nil {
 				fmt.Println("[ERROR] Constructing service:", err)
 				os.Exit(1)
 			}
-			err = createService(servingClient, service)
+			err = servingClient.CreateService(service)
 		}
 		if err != nil {
 			fmt.Println("[ERROR] Create service:", err)
@@ -202,7 +201,7 @@ var redeployCmd = &cobra.Command{
 				fmt.Println("[INFO] service", name,"is ready")
 				url := service.Status.URL.String()
 				if url == "" {
-					url = service.Status.DeprecatedDomain
+					url = service.Status.URL.String()
 				}
 				fmt.Println("[INFO] Service", name,"url is", url)
 				return
