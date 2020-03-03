@@ -18,9 +18,9 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 
 	"knative.dev/pkg/apis"
+	v1 "knative.dev/serving/pkg/apis/serving/v1"
 	"knative.dev/serving/pkg/apis/serving/v1beta1"
 )
 
@@ -34,12 +34,12 @@ func (source *Configuration) ConvertUp(ctx context.Context, obj apis.Convertible
 		}
 		return source.Status.ConvertUp(ctx, &sink.Status)
 	default:
-		return fmt.Errorf("unknown version, got: %T", sink)
+		return apis.ConvertUpViaProxy(ctx, source, &v1beta1.Configuration{}, sink)
 	}
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *ConfigurationSpec) ConvertUp(ctx context.Context, sink *v1beta1.ConfigurationSpec) error {
+func (source *ConfigurationSpec) ConvertUp(ctx context.Context, sink *v1.ConfigurationSpec) error {
 	if source.DeprecatedBuild != nil {
 		return ConvertErrorf("build", "build cannot be migrated forward.")
 	}
@@ -56,14 +56,13 @@ func (source *ConfigurationSpec) ConvertUp(ctx context.Context, sink *v1beta1.Co
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *ConfigurationStatus) ConvertUp(ctx context.Context, sink *v1beta1.ConfigurationStatus) error {
-	source.Status.ConvertTo(ctx, &sink.Status)
-
+func (source *ConfigurationStatus) ConvertUp(ctx context.Context, sink *v1.ConfigurationStatus) error {
+	source.Status.ConvertTo(ctx, &sink.Status, v1.IsConfigurationCondition)
 	return source.ConfigurationStatusFields.ConvertUp(ctx, &sink.ConfigurationStatusFields)
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *ConfigurationStatusFields) ConvertUp(ctx context.Context, sink *v1beta1.ConfigurationStatusFields) error {
+func (source *ConfigurationStatusFields) ConvertUp(ctx context.Context, sink *v1.ConfigurationStatusFields) error {
 	sink.LatestReadyRevisionName = source.LatestReadyRevisionName
 	sink.LatestCreatedRevisionName = source.LatestCreatedRevisionName
 	return nil
@@ -79,25 +78,25 @@ func (sink *Configuration) ConvertDown(ctx context.Context, obj apis.Convertible
 		}
 		return sink.Status.ConvertDown(ctx, source.Status)
 	default:
-		return fmt.Errorf("unknown version, got: %T", source)
+		return apis.ConvertDownViaProxy(ctx, source, &v1beta1.Configuration{}, sink)
 	}
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *ConfigurationSpec) ConvertDown(ctx context.Context, source v1beta1.ConfigurationSpec) error {
+func (sink *ConfigurationSpec) ConvertDown(ctx context.Context, source v1.ConfigurationSpec) error {
 	sink.Template = &RevisionTemplateSpec{}
 	return sink.Template.ConvertDown(ctx, source.Template)
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *ConfigurationStatus) ConvertDown(ctx context.Context, source v1beta1.ConfigurationStatus) error {
-	source.Status.ConvertTo(ctx, &sink.Status)
+func (sink *ConfigurationStatus) ConvertDown(ctx context.Context, source v1.ConfigurationStatus) error {
+	source.Status.ConvertTo(ctx, &sink.Status, v1.IsConfigurationCondition)
 
 	return sink.ConfigurationStatusFields.ConvertDown(ctx, source.ConfigurationStatusFields)
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *ConfigurationStatusFields) ConvertDown(ctx context.Context, source v1beta1.ConfigurationStatusFields) error {
+func (sink *ConfigurationStatusFields) ConvertDown(ctx context.Context, source v1.ConfigurationStatusFields) error {
 	sink.LatestReadyRevisionName = source.LatestReadyRevisionName
 	sink.LatestCreatedRevisionName = source.LatestCreatedRevisionName
 	return nil

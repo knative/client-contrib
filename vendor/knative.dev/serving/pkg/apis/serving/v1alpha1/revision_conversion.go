@@ -18,11 +18,11 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis"
 	"knative.dev/pkg/ptr"
+	v1 "knative.dev/serving/pkg/apis/serving/v1"
 	"knative.dev/serving/pkg/apis/serving/v1beta1"
 )
 
@@ -34,22 +34,23 @@ func (source *Revision) ConvertUp(ctx context.Context, obj apis.Convertible) err
 		source.Status.ConvertUp(ctx, &sink.Status)
 		return source.Spec.ConvertUp(ctx, &sink.Spec)
 	default:
-		return fmt.Errorf("unknown version, got: %T", sink)
+		return apis.ConvertUpViaProxy(ctx, source, &v1beta1.Revision{}, sink)
 	}
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *RevisionTemplateSpec) ConvertUp(ctx context.Context, sink *v1beta1.RevisionTemplateSpec) error {
+func (source *RevisionTemplateSpec) ConvertUp(ctx context.Context, sink *v1.RevisionTemplateSpec) error {
 	sink.ObjectMeta = source.ObjectMeta
 	return source.Spec.ConvertUp(ctx, &sink.Spec)
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *RevisionSpec) ConvertUp(ctx context.Context, sink *v1beta1.RevisionSpec) error {
-	sink.ContainerConcurrency = v1beta1.RevisionContainerConcurrencyType(
-		source.ContainerConcurrency)
+func (source *RevisionSpec) ConvertUp(ctx context.Context, sink *v1.RevisionSpec) error {
 	if source.TimeoutSeconds != nil {
 		sink.TimeoutSeconds = ptr.Int64(*source.TimeoutSeconds)
+	}
+	if source.ContainerConcurrency != nil {
+		sink.ContainerConcurrency = ptr.Int64(*source.ContainerConcurrency)
 	}
 	switch {
 	case source.DeprecatedContainer != nil && len(source.Containers) > 0:
@@ -59,6 +60,7 @@ func (source *RevisionSpec) ConvertUp(ctx context.Context, sink *v1beta1.Revisio
 			ServiceAccountName: source.ServiceAccountName,
 			Containers:         []corev1.Container{*source.DeprecatedContainer},
 			Volumes:            source.Volumes,
+			ImagePullSecrets:   source.ImagePullSecrets,
 		}
 	case len(source.Containers) == 1:
 		sink.PodSpec = source.PodSpec
@@ -75,12 +77,11 @@ func (source *RevisionSpec) ConvertUp(ctx context.Context, sink *v1beta1.Revisio
 }
 
 // ConvertUp helps implement apis.Convertible
-func (source *RevisionStatus) ConvertUp(ctx context.Context, sink *v1beta1.RevisionStatus) {
-	source.Status.ConvertTo(ctx, &sink.Status)
-
+func (source *RevisionStatus) ConvertUp(ctx context.Context, sink *v1.RevisionStatus) {
+	source.Status.ConvertTo(ctx, &sink.Status, v1.IsRevisionCondition)
 	sink.ServiceName = source.ServiceName
 	sink.LogURL = source.LogURL
-	// TODO(mattmoor): ImageDigest?
+	sink.ImageDigest = source.ImageDigest
 }
 
 // ConvertDown implements apis.Convertible
@@ -91,27 +92,26 @@ func (sink *Revision) ConvertDown(ctx context.Context, obj apis.Convertible) err
 		sink.Status.ConvertDown(ctx, source.Status)
 		return sink.Spec.ConvertDown(ctx, source.Spec)
 	default:
-		return fmt.Errorf("unknown version, got: %T", source)
+		return apis.ConvertDownViaProxy(ctx, source, &v1beta1.Revision{}, sink)
 	}
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *RevisionTemplateSpec) ConvertDown(ctx context.Context, source v1beta1.RevisionTemplateSpec) error {
+func (sink *RevisionTemplateSpec) ConvertDown(ctx context.Context, source v1.RevisionTemplateSpec) error {
 	sink.ObjectMeta = source.ObjectMeta
 	return sink.Spec.ConvertDown(ctx, source.Spec)
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *RevisionSpec) ConvertDown(ctx context.Context, source v1beta1.RevisionSpec) error {
+func (sink *RevisionSpec) ConvertDown(ctx context.Context, source v1.RevisionSpec) error {
 	sink.RevisionSpec = *source.DeepCopy()
 	return nil
 }
 
 // ConvertDown helps implement apis.Convertible
-func (sink *RevisionStatus) ConvertDown(ctx context.Context, source v1beta1.RevisionStatus) {
-	source.Status.ConvertTo(ctx, &sink.Status)
-
+func (sink *RevisionStatus) ConvertDown(ctx context.Context, source v1.RevisionStatus) {
+	source.Status.ConvertTo(ctx, &sink.Status, v1.IsRevisionCondition)
 	sink.ServiceName = source.ServiceName
 	sink.LogURL = source.LogURL
-	// TODO(mattmoor): ImageDigest?
+	sink.ImageDigest = source.ImageDigest
 }

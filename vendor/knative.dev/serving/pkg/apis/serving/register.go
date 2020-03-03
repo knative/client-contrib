@@ -16,9 +16,14 @@ limitations under the License.
 
 package serving
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 const (
 	// GroupName is the group name for knative labels and annotations
 	GroupName = "serving.knative.dev"
+
+	// GroupNamePrefix is the prefix for label key and annotation key
+	GroupNamePrefix = GroupName + "/"
 
 	// ConfigurationLabelKey is the label key attached to a Revision indicating by
 	// which Configuration it is created.
@@ -30,13 +35,13 @@ const (
 
 	// RouteLabelKey is the label key attached to a Configuration indicating by
 	// which Route it is configured as traffic target.
-	// The key can also be attached to ClusterIngress resources to indicate
+	// The key can also be attached to Ingress resources to indicate
 	// which Route triggered their creation.
 	// The key is also attached to k8s Service resources to indicate which Route
 	// triggered their creation.
 	RouteLabelKey = GroupName + "/route"
 
-	// RouteNamespaceLabelKey is the label key attached to a ClusterIngress
+	// RouteNamespaceLabelKey is the label key attached to a Ingress
 	// by a Route to indicate which namespace the Route was created in.
 	RouteNamespaceLabelKey = GroupName + "/routeNamespace"
 
@@ -66,4 +71,30 @@ const (
 	// QueueSideCarResourcePercentageAnnotation is the percentage of user container resources to be used for queue-proxy
 	// It has to be in [0.1,100]
 	QueueSideCarResourcePercentageAnnotation = "queue.sidecar." + GroupName + "/resourcePercentage"
+)
+
+var (
+	// ServicesResource respresents a Knative Service
+	ServicesResource = schema.GroupResource{
+		Group:    GroupName,
+		Resource: "services",
+	}
+
+	// ConfigurationsResource respresents a Knative Configuration
+	ConfigurationsResource = schema.GroupResource{
+		Group:    GroupName,
+		Resource: "configurations",
+	}
+
+	// RevisionsResource respresents a Knative Revision
+	RevisionsResource = schema.GroupResource{
+		Group:    GroupName,
+		Resource: "revisions",
+	}
+
+	// RoutesResource respresents a Knative Route
+	RoutesResource = schema.GroupResource{
+		Group:    GroupName,
+		Resource: "routes",
+	}
 )

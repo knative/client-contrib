@@ -19,7 +19,13 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
+
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha2"
+)
+
+const (
+	// TaskRunResultType default task run result value
+	TaskRunResultType ResultType = "TaskRunResult"
 )
 
 func (t *Task) TaskSpec() TaskSpec {
@@ -56,22 +62,31 @@ type TaskSpec struct {
 	// StepTemplate can be used as the basis for all step containers within the
 	// Task, so that the steps inherit settings on the base container.
 	StepTemplate *corev1.Container `json:"stepTemplate,omitempty"`
+
+	// Sidecars are run alongside the Task's step containers. They begin before
+	// the steps start and end after the steps complete.
+	Sidecars []corev1.Container `json:"sidecars,omitempty"`
+
+	// Workspaces are the volumes that this Task requires.
+	Workspaces []WorkspaceDeclaration `json:"workspaces,omitempty"`
+
+	// Results are values that this Task can output
+	Results []TaskResult `json:"results,omitempty"`
+}
+
+// TaskResult used to describe the results of a task
+type TaskResult struct {
+	// Name the given name
+	Name string `json:"name"`
+
+	// Description is a human-readable description of the result
+	// +optional
+	Description string `json:"description"`
 }
 
 // Step embeds the Container type, which allows it to include fields not
 // provided by Container.
-type Step struct {
-	corev1.Container
-}
-
-// Check that Task may be validated and defaulted.
-var _ apis.Validatable = (*Task)(nil)
-var _ apis.Defaultable = (*Task)(nil)
-
-const (
-	// TaskOutputImageDefaultDir is the default directory for output image resource,
-	TaskOutputImageDefaultDir = "/builder/home/image-outputs"
-)
+type Step = v1alpha2.Step
 
 // +genclient
 // +genclient:noStatus
@@ -113,19 +128,7 @@ type Inputs struct {
 // path to the volume mounted containing this Resource as an input (e.g.
 // an input Resource named `workspace` will be mounted at `/workspace`).
 type TaskResource struct {
-	// Name declares the name by which a resource is referenced in the Task's
-	// definition. Resources may be referenced by name in the definition of a
-	// Task's steps.
-	Name string `json:"name"`
-	// Type is the type of this resource;
-	Type PipelineResourceType `json:"type"`
-	// TargetPath is the path in workspace directory where the task resource
-	// will be copied.
-	// +optional
-	TargetPath string `json:"targetPath"`
-	// Path to the index.json file for output container images.
-	// +optional
-	OutputImageDir string `json:"outputImageDir"`
+	ResourceDeclaration `json:",inline"`
 }
 
 // Outputs allow a task to declare what data the Build/Task will be producing,
