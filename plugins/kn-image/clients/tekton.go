@@ -6,6 +6,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	pipelinev1alpha1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tekton_v1alpha1_client "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1alpha1"
+	tekton_resource_v1alpha1_client "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned/typed/resource/v1alpha1"
 	api_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
@@ -56,20 +57,22 @@ type TektonClient interface {
 }
 
 type tektonClient struct {
-	client    tekton_v1alpha1_client.TektonV1alpha1Interface
+	pipelineClient    tekton_v1alpha1_client.TektonV1alpha1Interface
+	resourceClient    tekton_resource_v1alpha1_client.TektonV1alpha1Interface
 	namespace string
 }
 
 // Create a new client facade for the provided namespace
-func NewTektonClient(client tekton_v1alpha1_client.TektonV1alpha1Interface, namespace string) TektonClient {
+func NewTektonClient(pipelineClient tekton_v1alpha1_client.TektonV1alpha1Interface, resourceClient tekton_resource_v1alpha1_client.TektonV1alpha1Interface, namespace string) TektonClient {
 	return &tektonClient{
-		client:    client,
+		pipelineClient: pipelineClient,
+		resourceClient: resourceClient,
 		namespace: namespace,
 	}
 }
 
 func (cl *tektonClient) TaskExists(name string) error {
-	_, err := cl.client.Tasks(cl.namespace).Get(name, metav1.GetOptions{})
+	_, err := cl.pipelineClient.Tasks(cl.namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -141,7 +144,7 @@ func (cl *tektonClient) ConstructImageResource(name, image, builder, serviceAcco
 }
 
 func (cl *tektonClient) PipelineResourceExists(name string) (bool, error) {
-	_, err := cl.client.PipelineResources(cl.namespace).Get(name, metav1.GetOptions{})
+	_, err := cl.resourceClient.PipelineResources(cl.namespace).Get(name, metav1.GetOptions{})
 	if api_errors.IsNotFound(err) {
 		return false, nil
 	}
@@ -153,7 +156,7 @@ func (cl *tektonClient) PipelineResourceExists(name string) (bool, error) {
 
 // Get a pipelineresource by its unique name
 func (cl *tektonClient) GetPipelineResource(name string) (*v1alpha1.PipelineResource, error) {
-	pipelineresource, err := cl.client.PipelineResources(cl.namespace).Get(name, metav1.GetOptions{})
+	pipelineresource, err := cl.resourceClient.PipelineResources(cl.namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +165,7 @@ func (cl *tektonClient) GetPipelineResource(name string) (*v1alpha1.PipelineReso
 
 // Create a new pipelineresource
 func (cl *tektonClient) CreatePipelineResource(pipelineresource *v1alpha1.PipelineResource) error {
-	_, err := cl.client.PipelineResources(cl.namespace).Create(pipelineresource)
+	_, err := cl.resourceClient.PipelineResources(cl.namespace).Create(pipelineresource)
 	if err != nil {
 		return err
 	}
@@ -174,14 +177,14 @@ func (cl *tektonClient) UpdatePipelineResource(pipelineresource *v1alpha1.Pipeli
 	var retries = 0
 	var MaxUpdateRetries = 3
 	for {
-		existingPipelineResource, err := cl.client.PipelineResources(cl.namespace).Get(pipelineresource.Name, metav1.GetOptions{})
+		existingPipelineResource, err := cl.resourceClient.PipelineResources(cl.namespace).Get(pipelineresource.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 		updateResource := pipelineresource.DeepCopy()
 		updateResource.ResourceVersion = existingPipelineResource.ResourceVersion
 
-		_, err = cl.client.PipelineResources(cl.namespace).Update(updateResource)
+		_, err = cl.resourceClient.PipelineResources(cl.namespace).Update(updateResource)
 		if err != nil {
 			// Retry to update when a resource version conflict exists
 			if api_errors.IsConflict(err) && retries < MaxUpdateRetries {
@@ -214,12 +217,16 @@ func (cl *tektonClient) ConstructTaskRun(name, builder, gitResourceName, imageRe
 				Name: builder,
 			},
 			Inputs: pipelinev1alpha1.TaskRunInputs{
-				Resources: []pipelinev1alpha1.TaskResourceBinding{{
-					ResourceRef: pipelinev1alpha1.PipelineResourceRef{
-						Name:       gitResourceName,
+				Resources: []pipelinev1alpha1.TaskResourceBinding{
+					{
+						PipelineResourceBinding: pipelinev1alpha1.PipelineResourceBinding{
+							ResourceRef: &pipelinev1alpha1.PipelineResourceRef{
+								Name: gitResourceName,
+							},
+							Name: "source",
+						},
 					},
-					Name: "source",
-				}},
+				},
 				Params: []pipelinev1alpha1.Param{
 					{
 						Name:  "BUILDER_IMAGE",
@@ -228,14 +235,18 @@ func (cl *tektonClient) ConstructTaskRun(name, builder, gitResourceName, imageRe
 				},
 			},
 			Outputs: pipelinev1alpha1.TaskRunOutputs{
-				Resources: []pipelinev1alpha1.TaskResourceBinding{{
-					ResourceRef: pipelinev1alpha1.PipelineResourceRef{
-						Name:       imageResourceName,
+				Resources: []pipelinev1alpha1.TaskResourceBinding{
+					{
+						PipelineResourceBinding: pipelinev1alpha1.PipelineResourceBinding{
+							ResourceRef: &pipelinev1alpha1.PipelineResourceRef{
+								Name:       imageResourceName,
+							},
+							Name: "image",
+						},
 					},
-					Name: "image",
-				}},
+				},
 			},
-			ServiceAccount: serviceAccount,
+			ServiceAccountName: serviceAccount,
 		},
 	}
 	return nil
@@ -243,7 +254,7 @@ func (cl *tektonClient) ConstructTaskRun(name, builder, gitResourceName, imageRe
 
 // Get a tas krun by its unique name
 func (cl *tektonClient) GetTaskRun(name string) (*v1alpha1.TaskRun, error) {
-	taskRun, err := cl.client.TaskRuns(cl.namespace).Get(name, metav1.GetOptions{})
+	taskRun, err := cl.pipelineClient.TaskRuns(cl.namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +263,7 @@ func (cl *tektonClient) GetTaskRun(name string) (*v1alpha1.TaskRun, error) {
 
 // Start a new task run
 func (cl *tektonClient) StartTaskRun(taskrun *v1alpha1.TaskRun) (string, error) {
-	newTaskRun, err := cl.client.TaskRuns(cl.namespace).Create(taskrun)
+	newTaskRun, err := cl.pipelineClient.TaskRuns(cl.namespace).Create(taskrun)
 	if err != nil {
 		return "", err
 	}
@@ -260,7 +271,7 @@ func (cl *tektonClient) StartTaskRun(taskrun *v1alpha1.TaskRun) (string, error) 
 	time.Sleep(5 * time.Second)
 	i := 0
 	for  i < BuildTimeout {
-		taskrun, err = cl.client.TaskRuns(cl.namespace).Get(newTaskRun.Name, metav1.GetOptions{})
+		taskrun, err = cl.pipelineClient.TaskRuns(cl.namespace).Get(newTaskRun.Name, metav1.GetOptions{})
 		if taskrun.Status.Conditions[0].Type == apis.ConditionSucceeded && taskrun.Status.Conditions[0].Status == "True" {
 			fmt.Println("[INFO] Build task run", taskrun.Name, "is ready from", taskrun.Status.StartTime, "to", taskrun.Status.CompletionTime)
 			return taskrun.Name, nil

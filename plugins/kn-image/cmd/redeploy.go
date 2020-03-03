@@ -20,7 +20,8 @@ import (
 	"github.com/knative/client-contrib/plugins/kn-image/clients"
 	serviceclientset "github.com/knative/serving/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
-	tektoncdclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	tektoncd_clientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	tektoncd_resource_clientset "github.com/tektoncd/pipeline/pkg/client/resource/clientset/versioned"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // from https://github.com/kubernetes/client-go/issues/345
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
@@ -38,6 +39,7 @@ var redeployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("")
 		if len(args) < 1 {
+			fmt.Println("[ERROR] Name can not be empty")
 			cmd.Help()
 			os.Exit(0)
 		}
@@ -62,12 +64,17 @@ var redeployCmd = &cobra.Command{
 			fmt.Println("[ERROR] Parsing kubeconfig error:", err)
 			os.Exit(1)
 		}
-		client, err := tektoncdclientset.NewForConfig(cfg)
+		pipelineClient, err := tektoncd_clientset.NewForConfig(cfg)
 		if err != nil {
-			fmt.Println("[ERROR] Building kubeconfig error:", err)
+			fmt.Println("[ERROR] Building kubeconfig for Tekton pipeline error:", err)
 			os.Exit(1)
 		}
-		tektonClient := clients.NewTektonClient(client.TektonV1alpha1(), namespace)
+		resourceClient, err := tektoncd_resource_clientset.NewForConfig(cfg)
+		if err != nil {
+			fmt.Println("[ERROR] Building kubeconfig for Tekton resource error:", err)
+			os.Exit(1)
+		}
+		tektonClient := clients.NewTektonClient(pipelineClient.TektonV1alpha1(), resourceClient.TektonV1alpha1(), namespace)
 
 		builder := cmd.Flag("builder").Value.String()
 		if builder == "" {
