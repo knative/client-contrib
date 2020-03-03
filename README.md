@@ -5,4 +5,5 @@ This repository is the place for contributions to extend [Knative client](https:
 
 ### Plugins
 
-_List of plugins here ..._
+
+* _kn-curl_ facilitates curling a Knative service with simple: `kn curl SERVICE_NAME`

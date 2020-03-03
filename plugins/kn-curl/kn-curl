@@ -1,0 +1,24 @@
+#!/bin/bash
+
+USAGE="Usage:
+  kn curl NAME
+
+Examples: 
+  # Curl service hello
+  kn curl hello
+"
+
+# Need at least the service name
+if [ -z "$1" ]
+then
+	echo $USAGE
+	exit 1
+fi
+
+# Get INGRESS assuming Istio
+KUBECTL=`which kubectl`
+INGRESS=$($KUBECTL get svc istio-ingressgateway --namespace istio-system | awk '{print $4}' | tail +2)
+
+# Perform curl of service
+set -x
+curl '-sS' '-H' 'Host: '"$1"'.default.example.com' 'http://'"$INGRESS"''
