@@ -1,18 +1,34 @@
 #!/bin/bash
 
-USAGE="Usage:
+USAGE=$"Usage:
   kn curl NAME
 
-Examples: 
+Examples:
   # Curl service hello
   kn curl hello
+
+  # Curl service hello in namespace myns
+  kn curl hello -n myns
+  kn curl hello --namespace myns
+
+  Flags:
+	-n, --namespace string             Specify the namespace to operate in.
 "
 
 # Need at least the service name
-if [ -z "$1" ]
-then
-	echo $USAGE
+if [ -z "$1" ]; then
+	echo "$USAGE"
 	exit 1
+fi
+
+# Flags
+N=$"-n"
+NAMESPACE=$"--namespace"
+NS="default"
+
+# Parse arguments for -n or --namespace and namespace value
+if [ "$N" == "$2" ] | [ "$NAMESPACE" == "$2" ] ; then
+	NS="$3"
 fi
 
 # Get INGRESS assuming Istio
@@ -21,4 +37,4 @@ INGRESS=$($KUBECTL get svc istio-ingressgateway --namespace istio-system | awk '
 
 # Perform curl of service
 set -x
-curl '-sS' '-H' 'Host: '"$1"'.default.example.com' 'http://'"$INGRESS"''
+curl '-sS' '-H' 'Host: '"$1"'.'"$NS"'.example.com' 'http://'"$INGRESS"''
