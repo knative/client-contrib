@@ -46,7 +46,7 @@ function unit_tests() {
 
 # Dispatch build tests
 function build_tests() {
-  echo "=== Running Plugin Build Tetsts ====================================="
+  echo "=== Running Plugin Build Tests ====================================="
   loop_over_plugins "presubmit-tests.sh" "--build-tests"
 }
 # We use the default build and integration test runners.
