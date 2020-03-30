@@ -38,9 +38,11 @@ export GO111MODULE=on
 # shellcheck source=test-infra/scripts/presubmit-tests.sh
 source "$(dirname $0)"/../test-infra/scripts/presubmit-tests.sh
 
-# We use the default build and integration test runners.
-main $@
-
+# Dispatch unit tests
 function unit_tests() {
     echo "Calling unit-test in each sub-project"
 }
+
+# We use the default build and integration test runners.
+main $@
+
