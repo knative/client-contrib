@@ -8,12 +8,12 @@ function loop_over_plugins() {
   local basedir=$(basedir)
 
   set -x
-  
+
   # Environment variable which can be used my plugins
   export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
 
   for plugin in "${basedir}"/plugins/*; do
-    local test_script="${basedir}/plugins/${plugin}/test/$script"
+    local test_script="$plugin/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
       eval "$test_script $opts" || fail_test
