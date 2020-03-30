@@ -7,6 +7,8 @@ function loop_over_plugins() {
 
   local basedir=$(basedir)
 
+  set -x
+  
   # Environment variable which can be used my plugins
   export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
 
