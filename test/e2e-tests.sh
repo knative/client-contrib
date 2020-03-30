@@ -11,9 +11,9 @@ run() {
 
   # Iterate over all plugin directories and check whether they have testing
   # enabled
-  for plugin in $(ls $basedir/plugins); do
-    local test_script=$basedir/plugins/"${plugin}"/test/e2e-tests.sh
-    if [ -x $basedir/plugins/$plugin/test/e2e-tests.sh ]; then
+  for plugin in "${basedir}"/plugins/*; do
+    local test_script="${basedir}/plugins/${plugin}/test/e2e-tests.sh"
+    if [ -x "${basedir}/plugins/${plugin}/test/e2e-tests.sh" ]; then
       echo "== $plugin ==============================="
       eval "$test_script" || fail_test
       echo "=========================================="
