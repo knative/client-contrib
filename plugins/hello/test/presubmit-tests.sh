@@ -45,5 +45,7 @@ function unit_tests() {
   report_go_test -race -mod=vendor ./... || failed=1
 }
 
+echo "PWD: $(pwd)"
+
 # We use the default build and integration test runners.
 main "$@"
