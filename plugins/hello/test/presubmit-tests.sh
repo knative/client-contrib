@@ -15,7 +15,14 @@
 # ==========================================
 # Unit and Build tests
 
+
+# We can't use MD checks now as they will propagate into
+# the plugins' vendor/ dir
+# (the filter in markdown_build_tests() in test-infra/scripts/presumit-tests.sh is
+# not strong enough
 export DISABLE_MD_LINTING=1
+export DISABLE_MD_LINK_CHECK=1
+
 export PRESUBMIT_TEST_FAIL_FAST=1
 export GO111MODULE=on
 
