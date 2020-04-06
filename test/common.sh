@@ -14,7 +14,9 @@ function loop_over_plugins() {
     local test_script="$plugin/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
-      eval "$test_script $opts" || fail_sub_test "Plugin $plugin failed with $?"
+      pushd "$plugin" || fail_sub_test "pushd: Cannot change into directory $plugin"
+      eval "$test_script $opts" || (popd && fail_sub_test "Plugin $plugin failed with $?")
+      popd || fail_sub_test "popd: Cannot revert from directory $plugin"
       echo "##########################################"
     fi
   done
