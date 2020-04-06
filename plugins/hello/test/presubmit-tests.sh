@@ -47,5 +47,7 @@ function unit_tests() {
 
 echo "PWD: $(pwd)"
 
+set -x
+
 # We use the default build and integration test runners.
 main "$@"
