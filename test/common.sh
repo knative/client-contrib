@@ -10,11 +10,17 @@ function loop_over_plugins() {
   # Environment variable which can be used my plugins
   export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
 
-  for plugin in "${basedir}"/plugins/*; do
-    local test_script="$plugin/test/$script"
+
+  plugins=$(list_plugins_changed_in_pr)
+  echo "--- Plugins changed in PR: ----------------"
+  echo "$plugins"
+  echo "-------------------------------------------"
+  for plugin in ${plugins}; do
+    local plugin_dir="${basedir}/plugins/$plugin"
+    local test_script="${plugin_dir}/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
-      bash -c "REPO_ROOT_DIR=$plugin $test_script $opts"
+      bash -c "REPO_ROOT_DIR=$plugin_dir $test_script $opts"
       local err=$?
       if [ $err -gt 0 ]; then
         fail_sub_test "Plugin $plugin failed with $err"
@@ -22,6 +28,10 @@ function loop_over_plugins() {
       echo "##########################################"
     fi
   done
+}
+
+function list_plugins_changed_in_pr() {
+   echo "$CHANGED_FILES" | grep "^plugins/" | sed -e 's|plugins/\([^/]*\).*|\1|' | uniq | sort
 }
 
 function fail_sub_test() {
