@@ -41,7 +41,7 @@ source "$(dirname $0)"/common.sh
 # Dispatch unit tests
 function unit_tests() {
   echo "=== Running Plugin Unit Tests ======================================="
-  loop_over_plugins "presubmit-tests.sh" "--build-tests"
+  loop_over_plugins "presubmit-tests.sh" "--unit-tests"
 }
 
 # Dispatch build tests

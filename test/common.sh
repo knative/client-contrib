@@ -14,10 +14,15 @@ function loop_over_plugins() {
     local test_script="$plugin/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
-      eval "$test_script $opts" || fail_test
+      eval "$test_script $opts" || fail_sub_test "Plugin $plugin failed with $?"
       echo "##########################################"
     fi
   done
+}
+
+function fail_sub_test() {
+  [[ -n $1 ]] && echo "ERROR: $1"
+  exit 1
 }
 
 # Calculate the base directory

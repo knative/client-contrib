@@ -39,4 +39,4 @@ function unit_tests() {
 }
 
 # We use the default build and integration test runners.
-main $@
+main "$@"
