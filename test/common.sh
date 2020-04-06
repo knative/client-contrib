@@ -14,8 +14,7 @@ function loop_over_plugins() {
     local test_script="$plugin/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
-      export REPO_ROOT_DIR="$plugin"
-      $test_script $opts
+      bash -c "REPO_ROOT_DIR=$plugin $test_script $opts"
       local err=$?
       if [ $err -gt 0 ]; then
         fail_sub_test "Plugin $plugin failed with $err"
