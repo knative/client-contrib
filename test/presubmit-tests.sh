@@ -34,7 +34,21 @@
 export DISABLE_MD_LINTING=1
 
 export GO111MODULE=on
-source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/presubmit-tests.sh
 
+source "$(dirname $0)"/../test-infra/scripts/presubmit-tests.sh
+source "$(dirname $0)"/common.sh
+
+# Dispatch unit tests
+function unit_tests() {
+  echo "=== Running Plugin Unit Tests ======================================="
+  loop_over_plugins "presubmit-tests.sh" "--unit-tests"
+}
+
+# Dispatch build tests
+function build_tests() {
+  echo "=== Running Plugin Build Tests ====================================="
+  loop_over_plugins "presubmit-tests.sh" "--build-tests"
+}
 # We use the default build and integration test runners.
 main $@
+

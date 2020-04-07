@@ -1,0 +1,111 @@
+// This documentation describes your plugin. It is written in Asciidoc, which
+// is very similar to Markdown, but much more powerful (i.e. it allows comments
+// like this)
+// See the short reference at for the main commands: http://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
+// Tip: Asciidoc authors often use to line-break after each sentence. That way, it's easier to move things around and to identify parts.
+
+## kn-hello
+
+// Add a summary description here. This description should fit in a single sentence.
+
+`kn hello` prints out a friendly message to the user.
+
+### Description
+
+// A longer description which also describes the use cases that this plugin solves.
+
+With this plugin, you can make the world a better place.
+Use it to greet your users with a friendly "Hello"
+
+Also, and more critical, this plugin serves as a blueprint for other plugins.
+So copy over the content of this directory into your new plugin and
+adapt it you your code.
+Including this README.
+
+### Usage
+
+// This is the reference section explaining all options.
+// This should start to contain the help message in a preformatted block
+// and then all commands individually
+
+// Note that the command should print out the format used when called via `kn`, not directly
+// so, it's "kn hello [command]", not "kn-hello [command]"
+----
+A longer description of this fantastic plugin that can go over several lines.
+
+Usage:
+  kn hello [command]
+
+Available Commands:
+  help        Help about any command
+  print       Print the argument
+  version     Prints the plugin version
+
+Flags:
+  -h, --help   help for kn-hello
+
+Use "kn-hello [command] --help" for more information about a command.
+----
+
+#### `kn print`
+
+----
+Print the argument
+
+Usage:
+  kn hello print [flags]
+
+Flags:
+  -h, --help   help for print
+----
+
+#### `kn version`
+
+This command prints out the version of this plugin and all extra information which might help, for example when creating bug reports.
+
+----
+Prints the plugin version
+
+Usage:
+  kn hello version [flags]
+
+Flags:
+  -h, --help   help for version
+----
+
+### Examples
+
+// Add examples that can be tried out by the user and which reflects the use cases that are solved by this plugin
+// The use case should be part of a #### headline, followed by a short description
+// of that use case and then the concrete examples
+#### Print out a beautiful message
+
+Often you want to greet your users with a charming message.
+In this case, you can use the `kn hello print` command.
+The only required argument here is the name of the person to greet.
+
+.Example Greeting
+====
+----
+$ kn hello print Carl
+
+Hello, Carl
+----
+====
+
+#### Print out the version of this plugin
+
+The `kn hello version` command helps you to identify the version of this plugin.
+
+.Example version output
+=====
+-----
+$ kn hello version
+
+Version:      v20200402-local-a099aaf-dirty
+Build Date:   2020-04-02 18:16:20
+Git Revision: a099aaf
+-----
+=====
+
+As you can see it prints out the version (or a generated timestamp when this plugin is built from a non-released commit), the date when the plugin has been built and the actual Git revision.
