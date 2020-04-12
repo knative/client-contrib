@@ -1,0 +1,124 @@
+## kn-admin
+
+A kn plugin for Knative cluster management.
+
+`kn hello` prints out a friendly message to the user.
+
+### Description
+
+This kn-admin plugin is designed to help administrators and operators better manage a Knative platform installation with kn CLI.
+The plugin’s main objective is to make administration and operation workflows easier, for instance by making it easy to accomplish
+tasks such as feature flags enablement or disablement with one command, instead of many manual steps like modifying ConfigMaps or yaml files.
+
+### Usage
+
+----
+A plugin of kn client to manage Knative for administrators.
+
+For example:
+kn admin domain set - to set Knative route domain
+kn admin private-registry enable - to enable deployment from the private registry
+
+Usage:
+  kn admin [command]
+
+Available Commands:
+  domain           Manage route domain
+  help             Help about any command
+  private-registry Manage private-registry
+
+Flags:
+      --config string   config file (default is $HOME/.config/kn/plugins/kn-admin.yaml)
+  -h, --help            help for admin
+  -t, --toggle          Help message for toggle
+
+Use "admin [command] --help" for more information about a command.
+----
+
+#### `kn admin domain`
+
+----
+Set default route domain or route domain for Service with selectors. For example:
+
+kn admin domain set - to set Knative route domain
+
+Usage:
+  kn admin domain [flags]
+  kn admin domain [command]
+
+Available Commands:
+  set         set route domain
+
+Flags:
+  -h, --help   help for domain
+
+Global Flags:
+      --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
+
+Use "admin domain [command] --help" for more information about a command.
+
+----
+
+#### `kn admin private-registry`
+
+----
+Manage Service deployment from a private registry
+For example:
+
+kn admin private-registry enable \
+  --secret-name=[SECRET_NAME]
+  --docker-server=[PRIVATE_REGISTRY_SERVER_URL] \
+  --docker-email=[PRIVATE_REGISTRY_EMAIL] \
+  --docker-username=[PRIVATE_REGISTRY_USER] \
+  --docker-password=[PRIVATE_REGISTRY_PASSWORD]
+
+Usage:
+  kn admin private-registry [command]
+
+Available Commands:
+  enable      enable Service deployment from a private registry
+
+Flags:
+  -h, --help   help for private-registry
+
+Global Flags:
+      --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
+
+Use "admin private-registry [command] --help" for more information about a command.
+
+----
+
+### Examples
+
+#### As a Knative administrator, I want to update Knative route domain with my custom domain.
+
+
+.Update the default route domain if --selector no specified
+====
+----
+$ kn admin domain set --custom-domain mydomain.com
+Updated Knative route domain mydomain.com
+----
+====
+
+.Update a custom domain with --selector and Service with a label app=v1 will use test.com
+====
+----
+$ kn admin domain set --custom-domain test.com --selector app=v1
+Updated Knative route domain test.com
+----
+====
+
+#### As a Knative administrator, I want to enable deploying from private registry.
+
+.Enable a private registry with given credentials for Service creation
+=====
+-----
+$ kn admin private-registry enable \
+  --secret-name=[SECRET_NAME]
+  --docker-server=[PRIVATE_REGISTRY_SERVER_URL] \
+  --docker-email=[PRIVATE_REGISTRY_EMAIL] \
+  --docker-username=[PRIVATE_REGISTRY_USER] \
+  --docker-password=[PRIVATE_REGISTRY_PASSWORD]
+-----
+=====
