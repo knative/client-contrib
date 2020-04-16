@@ -15,5 +15,20 @@
 # ===============================================
 # Add you integration tests here
 
+source "$(dirname $0)"/../../../test-infra/scripts/e2e-tests.sh
+
 echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
-echo "Testing kn-myplugin"
+echo "Testing hello"
+
+run() {
+
+  header "Running plugin hello e2e tests for Knative Serving $KNATIVE_SERVING_VERSION and Eventing $KNATIVE_EVENTING_VERSION"
+
+  go_test_e2e -timeout=45m ./test/e2e || fail_test
+
+  success
+}
+
+# Fire up
+cd ${REPO_ROOT_DIR}
+run $@

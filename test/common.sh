@@ -31,7 +31,8 @@ function loop_over_plugins() {
 }
 
 function list_plugins_changed_in_pr() {
-   echo "$CHANGED_FILES" | grep "^plugins/" | sed -e 's|plugins/\([^/]*\).*|\1|' | uniq | sort
+  CHANGED_FILES="$(list_changed_files)"
+  echo "$CHANGED_FILES" | grep "^plugins/" | sed -e 's|plugins/\([^/]*\).*|\1|' | uniq | sort
 }
 
 function fail_sub_test() {
