@@ -18,6 +18,10 @@ I.e. it demonstrates:
 * How CI and testing, in general, can be setup
 * Contains a sample build tool `build.sh` which can easily be customized
 
+### kn-admin
+
+
+
 _list of plugins to be continued ..._
 
 ### How to contribute a plugin
