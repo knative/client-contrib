@@ -53,6 +53,12 @@ func TestCreateRunE(t *testing.T) {
 	assert.Assert(t, function != nil)
 }
 
+func TestDeleteRunE(t *testing.T) {
+	runEFactory := createKafkaSourceRunEFactory()
+	function := runEFactory.DeleteRunE()
+	assert.Assert(t, function != nil)
+}
+
 // Private
 
 func createKafkaSourceRunEFactory() types.KafkaSourceRunEFactory {

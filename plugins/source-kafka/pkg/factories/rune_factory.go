@@ -68,7 +68,6 @@ func (f *kafkaSourceRunEFactory) CreateRunE() sourcetypes.RunE {
 			return err
 		}
 		f.kafkaSourceClient = f.KafkaSourceClient(namespace)
-		fmt.Printf("%s RunE function called for Kafka source: args: %#v, client: %#v\n", cmd.Name(), args, f.kafkaSourceClient)
 
 		if len(args) != 1 {
 			return errors.New("requires the name of the source to create as single argument")
@@ -110,8 +109,31 @@ func (f *kafkaSourceRunEFactory) CreateRunE() sourcetypes.RunE {
 
 func (f *kafkaSourceRunEFactory) DeleteRunE() sourcetypes.RunE {
 	return func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("%s RunE function called for Kafka source: args: %#v, client: %#v\n", cmd.Name(), args, f.kafkaSourceClient)
-		return nil
+		var err error
+		namespace, err := f.KnSourceParams().GetNamespace(cmd)
+		if err != nil {
+			return err
+		}
+		f.kafkaSourceClient = f.KafkaSourceClient(namespace)
+
+		if len(args) != 1 {
+			return errors.New("requires the name of the source to create as single argument")
+		}
+		name := args[0]
+
+		err = f.kafkaSourceClient.DeleteKafkaSource(name)
+
+		if err != nil {
+			return fmt.Errorf(
+				"cannot delete KafkaSource '%s' in namespace '%s' "+
+					"because: %s", name, f.kafkaSourceClient.Namespace(), err)
+		}
+
+		if err == nil {
+			fmt.Fprintf(cmd.OutOrStdout(), "Kafka source '%s' deleted in namespace '%s'.\n", args[0], f.kafkaSourceClient.Namespace())
+		}
+
+		return err
 	}
 }
 

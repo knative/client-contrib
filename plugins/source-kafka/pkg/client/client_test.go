@@ -50,6 +50,16 @@ func TestCreateKafka(t *testing.T) {
 	assert.NilError(t, err)
 }
 
+func TestDeleteKafka(t *testing.T) {
+	fakeE := fake.FakeSourcesV1alpha1{Fake: &client_testing.Fake{}}
+	cli := NewKafkaSourceClient(&types.KafkaSourceParams{}, &fakeE, "fake-namespace")
+	objNew := newKafkaSource("samplekafka")
+	err := cli.CreateKafkaSource(objNew)
+	assert.NilError(t, err)
+	err = cli.DeleteKafkaSource("samplekafka")
+	assert.NilError(t, err)
+}
+
 func newKafkaSource(name string) *v1alpha1.KafkaSource {
 	return NewKafkaSourceBuilder(name).
 		BootstrapServers("test.server.org").

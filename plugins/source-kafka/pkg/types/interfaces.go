@@ -23,6 +23,7 @@ import (
 type KafkaSourceClient interface {
 	sourcetypes.KnSourceClient
 	CreateKafkaSource(kafkaSource *v1alpha1.KafkaSource) error
+	DeleteKafkaSource(name string) error
 }
 
 type KafkaSourceFactory interface {

@@ -68,3 +68,22 @@ Flags:
   -s, --sink string            Addressable sink for events
       --topics string          Topics to consume messages from
 ```
+
+#### `kn source_kafka delete`
+
+```
+$ kn source_kafka delete --help
+delete a Kafka source
+
+Usage:
+  kafka delete NAME [flags]
+
+Examples:
+#Deletes a Kafka source with name 'mykafkasrc'
+kn source_kafka delete mykafkasrc
+
+Flags:
+  -A, --all-namespaces     If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
+  -h, --help               help for delete
+  -n, --namespace string   Specify the namespace to operate in.
+```

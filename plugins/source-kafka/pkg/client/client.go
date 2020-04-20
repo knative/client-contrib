@@ -42,17 +42,27 @@ func NewKafkaSourceClient(kafkaParams *types.KafkaSourceParams, c clientv1alpha1
 	}
 }
 
-func (client *kafkaSourceClient) KnSourceParams() *sourcetypes.KnSourceParams {
-	return client.kafkaSourceParams.KnSourceParams
+func (c *kafkaSourceClient) KnSourceParams() *sourcetypes.KnSourceParams {
+	return c.kafkaSourceParams.KnSourceParams
 }
 
-func (client *kafkaSourceClient) KafkaSourceParams() *types.KafkaSourceParams {
-	return client.kafkaSourceParams
+func (c *kafkaSourceClient) KafkaSourceParams() *types.KafkaSourceParams {
+	return c.kafkaSourceParams
 }
 
-//CreateKafkaSource is used to create an instance of ApiServerSource
+//CreateKafkaSource is used to create an instance of KafkaSource
 func (c *kafkaSourceClient) CreateKafkaSource(kafkaSource *v1alpha1.KafkaSource) error {
 	_, err := c.client.KafkaSources(c.namespace).Create(kafkaSource)
+	if err != nil {
+		return knerrors.GetError(err)
+	}
+
+	return nil
+}
+
+//DeleteKafkaSource is used to create an instance of KafkaSource
+func (c *kafkaSourceClient) DeleteKafkaSource(name string) error {
+	err := c.client.KafkaSources(c.namespace).Delete(name, &metav1.DeleteOptions{})
 	if err != nil {
 		return knerrors.GetError(err)
 	}

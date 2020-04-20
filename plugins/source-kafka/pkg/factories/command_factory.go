@@ -63,7 +63,7 @@ func (f *kafkaSourceCommandFactory) CreateCommand() *cobra.Command {
 	createCmd := f.defaultCommandFactory.CreateCommand()
 	createCmd.Short = "create NAME"
 	createCmd.Example = `#Creates a new Kafka source named as 'mykafkasrc' which subscribes a Kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the event messages to service 'event-display'
-kn source_kafka create kafka-name --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display`
+kn source_kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display`
 	return createCmd
 }
 
@@ -71,8 +71,8 @@ func (f *kafkaSourceCommandFactory) DeleteCommand() *cobra.Command {
 	deleteCmd := f.defaultCommandFactory.DeleteCommand()
 	deleteCmd.Short = "delete NAME"
 	deleteCmd.Long = "delete a Kafka source"
-	deleteCmd.Example = `#Deletes a Kafka source with NAME
-kn source_kafka delete kafka-name`
+	deleteCmd.Example = `#Deletes a Kafka source with name 'mykafkasrc'
+kn source_kafka delete mykafkasrc`
 	return deleteCmd
 }
 
