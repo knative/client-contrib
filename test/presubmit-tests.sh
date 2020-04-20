@@ -50,5 +50,5 @@ function build_tests() {
   loop_over_plugins "presubmit-tests.sh" "--build-tests"
 }
 # We use the default build and integration test runners.
-main $@
+main "$@"
 
