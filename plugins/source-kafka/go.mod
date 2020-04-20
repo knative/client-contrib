@@ -1,7 +1,7 @@
 module knative.dev/client-contrib/plugins/source-kafka
 
 require (
-	github.com/maximilien/kn-source-pkg v0.3.2
+	github.com/maximilien/kn-source-pkg v0.3.3
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
 	gotest.tools v2.2.0+incompatible

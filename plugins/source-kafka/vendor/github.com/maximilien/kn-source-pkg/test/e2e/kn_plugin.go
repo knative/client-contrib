@@ -59,9 +59,17 @@ func (kp *knPlugin) Install() error {
 		return err
 	}
 
+	pluginDir := filepath.Join(configDir, "plugins")
+	if !dirExists(pluginDir) {
+		err = os.MkdirAll(pluginDir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+
 	fmt.Printf("installing 'kn' plugin '%s' from path '%s' to config path: %s\n", kp.pluginName, kp.pluginPath, configDir)
 
-	err = copyPluginFile(filepath.Join(kp.pluginPath, kp.pluginName), filepath.Join(configDir, "plugins", kp.pluginName))
+	err = copyPluginFile(filepath.Join(kp.pluginPath, kp.pluginName), filepath.Join(pluginDir, kp.pluginName))
 	if err != nil {
 		fmt.Printf("error copying plugin file to config directory: %s\n", err.Error())
 		return err

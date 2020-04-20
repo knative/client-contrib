@@ -24,6 +24,7 @@ base=$(cd "$dir/.." && pwd)
 
 echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
 echo "Testing kn-source-kafka"
+cd ${REPO_ROOT_DIR}
 
 # Strimzi installation config template used for starting up Kafka clusters.
 readonly STRIMZI_INSTALLATION_CONFIG_TEMPLATE="test/config/100-strimzi-cluster-operator-0.17.0.yaml"
@@ -100,5 +101,4 @@ run() {
 }
 
 # Fire up
-cd ${REPO_ROOT_DIR}
 run $@
