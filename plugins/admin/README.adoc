@@ -110,7 +110,7 @@ Updated Knative route domain test.com
 
 #### As a Knative administrator, I want to enable deploying from private registry.
 
-.Enable a private registry with given credentials for Service creation
+.Enable a private registry with given credentials for Service creation.
 =====
 -----
 $ kn admin registry add \
