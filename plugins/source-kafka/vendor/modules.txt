@@ -41,10 +41,12 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-containerregistry v0.0.0-20200304201134-fcc8ea80e26f
+# github.com/google/go-containerregistry v0.0.0-20200413145205-82d30a103c0a
 github.com/google/go-containerregistry/pkg/name
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
 # github.com/googleapis/gnostic v0.2.2
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
@@ -464,7 +466,7 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
-# knative.dev/client v0.13.2
+# knative.dev/client v0.13.1-0.20200420100249-286c6cd0b817
 knative.dev/client/lib/test
 knative.dev/client/pkg/dynamic
 knative.dev/client/pkg/errors
@@ -479,7 +481,7 @@ knative.dev/client/pkg/sources/v1alpha2
 knative.dev/client/pkg/util
 knative.dev/client/pkg/util/mock
 knative.dev/client/pkg/wait
-# knative.dev/eventing v0.13.6
+# knative.dev/eventing v0.14.0
 knative.dev/eventing/pkg/apis/config
 knative.dev/eventing/pkg/apis/configs
 knative.dev/eventing/pkg/apis/configs/v1alpha1
@@ -492,8 +494,6 @@ knative.dev/eventing/pkg/apis/eventing/v1beta1
 knative.dev/eventing/pkg/apis/flows
 knative.dev/eventing/pkg/apis/flows/v1alpha1
 knative.dev/eventing/pkg/apis/flows/v1beta1
-knative.dev/eventing/pkg/apis/legacysources
-knative.dev/eventing/pkg/apis/legacysources/v1alpha1
 knative.dev/eventing/pkg/apis/messaging
 knative.dev/eventing/pkg/apis/messaging/config
 knative.dev/eventing/pkg/apis/messaging/v1alpha1
@@ -529,7 +529,7 @@ knative.dev/pkg/logging/logkey
 knative.dev/pkg/profiling
 knative.dev/pkg/ptr
 knative.dev/pkg/tracker
-# knative.dev/serving v0.13.2
+# knative.dev/serving v0.14.0
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
 knative.dev/serving/pkg/apis/config
