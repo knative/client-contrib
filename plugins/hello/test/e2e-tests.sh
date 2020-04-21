@@ -19,6 +19,7 @@ source "$(dirname $0)"/../../../test-infra/scripts/e2e-tests.sh
 
 echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
 echo "Testing hello"
+cd ${REPO_ROOT_DIR}
 
 run() {
 
@@ -30,5 +31,4 @@ run() {
 }
 
 # Fire up
-cd ${REPO_ROOT_DIR}
 run $@

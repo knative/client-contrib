@@ -68,3 +68,9 @@ function knative_setup() {
     start_release_knative_eventing "${eventing_version}"
   fi
 }
+
+function cluster_setup() {
+  header "Installing client"
+  go get knative.dev/client
+  go install knative.dev/client/cmd/kn
+}
