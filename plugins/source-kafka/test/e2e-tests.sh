@@ -93,6 +93,8 @@ run() {
 
   echo "🧪  Setup"
   plugin_test_setup
+  echo "🧪  Build"
+  ./hack/build.sh -f
   echo "🧪  Testing"
   go_test_e2e -timeout=45m ./test/e2e || fail_test
   echo "🧪  Teardown"

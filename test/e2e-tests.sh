@@ -22,8 +22,6 @@ run() {
 plugins_test() {
   # Iterate over all plugin directories and check whether they have testing
   # enabled
-  echo "==== Building Plugins ============================"
-  loop_over_plugins "presubmit-tests.sh" "--build-tests"
   echo "==== Running Plugins E2E tests ============================"
   loop_over_plugins "e2e-tests.sh" ""
 }

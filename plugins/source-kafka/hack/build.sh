@@ -16,6 +16,8 @@
 
 set -o pipefail
 
+# Name of the plugin
+PLUGIN="kn-source_kafka"
 source_dirs="cmd pkg test"
 
 # Store for later
@@ -87,7 +89,7 @@ run() {
   go_test
 
   echo "────────────────────────────────────────────"
-  ./kn-source_kafka
+  ./$PLUGIN
 }
 
 
@@ -127,11 +129,11 @@ source_format() {
 
 go_build() {
   echo "🚧 Compile"
-  go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o kn-source_kafka ./cmd/...
+  go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o $PLUGIN ./cmd/...
 }
 
 go_test() {
-  local test_output=$(mktemp /tmp/kn-client-test-output.XXXXXX)
+  local test_output=$(mktemp /tmp/${PLUGIN}-test-output.XXXXXX)
 
   local red=""
   local reset=""
@@ -159,7 +161,7 @@ check_license() {
   local required_keywords=("Authors" "Apache License" "LICENSE-2.0")
   local extensions_to_check=("sh" "go" "yaml" "yml" "json")
 
-  local check_output=$(mktemp /tmp/kn-client-licence-check.XXXXXX)
+  local check_output=$(mktemp /tmp/${PLUGIN}-licence-check.XXXXXX)
   for ext in "${extensions_to_check[@]}"; do
     find . -name "*.$ext" -a \! -path "./vendor/*" -a \! -path "./.*" -print0 |
       while IFS= read -r -d '' path; do
@@ -259,12 +261,12 @@ cross_build() {
   echo "⚔️ ${S}Compile"
 
   export CGO_ENABLED=0
-  echo "   🐧 kn-linux-amd64"
-  GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./kn-linux-amd64 ./cmd/... || failed=1
-  echo "   🍏 kn-darwin-amd64"
-  GOOS=darwin GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./kn-darwin-amd64 ./cmd/... || failed=1
-  echo "   🎠 kn-windows-amd64.exe"
-  GOOS=windows GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./kn-windows-amd64.exe ./cmd/... || failed=1
+  echo "   🐧 ${PLUGIN}-linux-amd64"
+  GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./${PLUGIN}-linux-amd64 ./cmd/... || failed=1
+  echo "   🍏 ${PLUGIN}-darwin-amd64"
+  GOOS=darwin GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./${PLUGIN}-darwin-amd64 ./cmd/... || failed=1
+  echo "   🎠 ${PLUGIN}-windows-amd64.exe"
+  GOOS=windows GOARCH=amd64 go build -mod=vendor -ldflags "${ld_flags}" -o ./${PLUGIN}-windows-amd64.exe ./cmd/... || failed=1
 
   return ${failed}
 }
@@ -294,7 +296,7 @@ apply_emoji_fixes() {
 display_help() {
     local command="${1:-}"
     cat <<EOT
-Knative client build script
+Build script for Kn plugin $PLUGIN
 
 Usage: $(basename $BASH_SOURCE) [... options ...]
 
@@ -312,7 +314,7 @@ with the following options:
 You can add a symbolic link to this build script into your PATH so that it can be
 called from everywhere. E.g.:
 
-ln -s $(basedir)/hack/build.sh /usr/local/bin/kn_build.sh
+ln -s $(basedir)/hack/build.sh /usr/local/bin/$PLUGIN_build.sh
 
 Examples:
 
