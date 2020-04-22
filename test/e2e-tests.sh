@@ -11,7 +11,7 @@ run() {
   export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
 
   # Create cluster
-  initialize $@
+  initialize "$@"
 
   # Plugins integration test
   eval plugins_test || fail_test
@@ -28,4 +28,4 @@ plugins_test() {
   loop_over_plugins "e2e-tests.sh" ""
 }
 
-run $@
+run "$@"

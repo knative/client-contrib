@@ -9,7 +9,7 @@ All plugins are stored below the `plugins/` directory. Currently, you can find t
 
 #### kn-hello
 
-[kn-hello](plugin/hello) is a "Hello World" plugin which also serves as a blueprint for new plugins.  It contains the pieces that a mandatory for any new (golang based) plugin.
+[kn-hello](plugins/hello/README.adoc) is a "Hello World" plugin which also serves as a blueprint for new plugins.  It contains the pieces that a mandatory for any new (golang based) plugin.
 
 I.e. it demonstrates:
 
@@ -17,6 +17,11 @@ I.e. it demonstrates:
 * How the README and documentation should be structured
 * How CI and testing, in general, can be setup
 * Contains a sample build tool `build.sh` which can easily be customized
+
+### kn-admin
+
+[kn-admin](plugins/admin/README.adoc) helps in configuring a Knative installation on Kubernetes.
+
 
 _list of plugins to be continued ..._
 
