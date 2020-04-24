@@ -1,14 +1,15 @@
-# kn migration migrate
+# kn-migration plugin
 
 Migrate Knative services from source cluster to destination cluster
 
 ## Plugin introduction
+
 ### Synopsis
 
 Migrate Knative services from source cluster to destination cluster
 
 ```
-> kn migration --help
+kn migration --help
 Migrate Knative services from source cluster to destination cluster
 
 Usage:
@@ -21,6 +22,7 @@ Available Commands:
 ```
 
 ### Examples
+
 ```
   # Migrate Knative services from source cluster to destination cluster by export KUBECONFIG and KUBECONFIG_DESTINATION as environment variables
   kn migration migrate --namespace default --destination-namespace default
@@ -36,6 +38,7 @@ Available Commands:
 ```
 
 ### Options
+
 ```
       --delete                          Delete all Knative resources after kn-migration from source cluster
       --destination-kubeconfig string   The kubeconfig of the destination Knative resources (default is KUBECONFIG_DESTINATION from environment variable)
@@ -46,6 +49,7 @@ Available Commands:
 ```
 
 ### Options inherited from parent commands
+
 ```
       --config string       kn config file (default is $HOME/.kn/config.yaml)
       --kubeconfig string   kubectl config file (default is $HOME/.kube/config)
@@ -53,14 +57,19 @@ Available Commands:
 ```
 
 ## Migration flow
+
 ### Step 1 Execute migrate command
+
 ![Step 1 Execute migrate command](doc/step1.png)
 
 ### Step 2 Migrate first service with revisions
+
 ![Step 2 Migrate first service with revisions](doc/step2.png)
 
 ### Step 3 Migrate next service with revisions
+
 ![Step 3 Migrate next service with revisions](doc/step3.png)
 
 ### Step 4 Clean kn resources with --delete
+
 ![Step 4 Clean kn resources with --delete](doc/step4.png)
