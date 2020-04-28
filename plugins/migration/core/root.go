@@ -34,7 +34,7 @@ func NewMigrationCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "kn\u00A0migration",
 		Short: "A plugin of kn client to migrate Knative services",
-		Long: `kn admin: a plugin of kn client to migrate Knative services.
+		Long: `kn migration: a plugin of kn client to migrate Knative services.
 For example:
 kn migration list
 kn migration migrate --namespace default --destination-namespace default
