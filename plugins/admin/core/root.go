@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/viper"
 	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/command"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/autoscaling"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/domain"
 	private_registry "knative.dev/client-contrib/plugins/admin/pkg/command/registry"
 )
@@ -43,6 +44,7 @@ func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 For example:
 kn admin domain set - to set Knative route domain
 kn admin registry add - to add registry with credentials
+kn admin autoscaling update - to manage autoscaling config
 `,
 	}
 	cobra.OnInitialize(initConfig)
@@ -51,6 +53,7 @@ kn admin registry add - to add registry with credentials
 
 	rootCmd.AddCommand(domain.NewDomainCmd(p))
 	rootCmd.AddCommand(private_registry.NewPrivateRegistryCmd(p))
+	rootCmd.AddCommand(autoscaling.NewAutoscalingCmd(p))
 	rootCmd.AddCommand(command.NewVersionCommand())
 
 	// Add default help page if there's unknown command
