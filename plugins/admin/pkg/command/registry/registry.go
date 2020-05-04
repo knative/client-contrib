@@ -35,5 +35,6 @@ kn admin registry add \
   --password=[REGISTRY_PASSWORD]`,
 	}
 	privateRegistryCmd.AddCommand(NewPrAddCommand(p))
+	privateRegistryCmd.InitDefaultHelpCmd()
 	return privateRegistryCmd
 }

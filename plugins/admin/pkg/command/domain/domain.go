@@ -15,8 +15,6 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"knative.dev/client-contrib/plugins/admin/pkg"
 )
@@ -26,13 +24,11 @@ func NewDomainCmd(p *pkg.AdminParams) *cobra.Command {
 	var domainCmd = &cobra.Command{
 		Use:   "domain",
 		Short: "Manage route domain",
-		Long: `Set default route domain or route domain for Service with selectors. For example:
+		Long: `Set default route domain or custom route domain for Service with selectors. For example:
 
 kn admin domain set - to set Knative route domain`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("domain called")
-		},
 	}
 	domainCmd.AddCommand(NewDomainSetCommand(p))
+	domainCmd.InitDefaultHelpCmd()
 	return domainCmd
 }

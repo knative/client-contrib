@@ -15,6 +15,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -28,14 +29,14 @@ import (
 )
 
 type prcmdFlags struct {
-	DockerServer   string
-	SecretName     string
-	DockerEmail    string
-	DockerUsername string
-	DockerPassword string
+	Server     string
+	SecretName string
+	Email      string
+	Username   string
+	Password   string
 }
 
-type DockerRegistry struct {
+type Registry struct {
 	Auths Auths `json:"auths"`
 }
 type RegistryCred struct {
@@ -44,9 +45,6 @@ type RegistryCred struct {
 	Email    string `json:"Email"`
 }
 
-//type Auths struct {
-//	RegistryCred RegistryCred `json:"us.icr.io"`
-//}
 type Auths map[string]RegistryCred
 
 //
@@ -69,13 +67,25 @@ kn admin registry add \
   --email=[REGISTRY_EMAIL] \
   --username=[REGISTRY_USER] \
   --password=[REGISTRY_PASSWORD]`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if prflags.Username == "" {
+				return errors.New("'registry add' requires the registry user name to run provided with the --username option")
+			}
+			if prflags.Password == "" {
+				return errors.New("'registry add' requires the registry password to run provided with the --password option")
+			}
+			if prflags.Server == "" {
+				return errors.New("'registry add' requires the registry server to run provided with the --server option")
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			dockerCfg := DockerRegistry{
+			dockerCfg := Registry{
 				Auths: Auths{
-					prflags.DockerServer: RegistryCred{
-						Username: prflags.DockerUsername,
-						Password: prflags.DockerPassword,
-						Email:    prflags.DockerEmail,
+					prflags.Server: RegistryCred{
+						Username: prflags.Username,
+						Password: prflags.Password,
+						Email:    prflags.Email,
 					},
 				},
 			}
@@ -96,8 +106,8 @@ kn admin registry add \
 				},
 				Type: corev1.SecretTypeDockerConfigJson,
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      prflags.SecretName,
-					Namespace: "default",
+					GenerateName: fmt.Sprintf("%s-", prflags.SecretName),
+					Namespace:    "default",
 				},
 				Data: secretData,
 			}
@@ -120,15 +130,19 @@ kn admin registry add \
 				os.Exit(1)
 			}
 
-			fmt.Printf("Private registry %s added for default Service Account\n", prflags.DockerServer)
+			fmt.Printf("Private registry %s added for default Service Account\n", prflags.Server)
 		},
 	}
 
-	prAddCmd.Flags().StringVar(&prflags.SecretName, "secret-name", "", "Registry Secret Name")
-	prAddCmd.Flags().StringVar(&prflags.DockerServer, "server", "", "Registry Address")
-	prAddCmd.Flags().StringVar(&prflags.DockerEmail, "email", "", "Registry Email")
-	prAddCmd.Flags().StringVar(&prflags.DockerUsername, "username", "", "Registry Username")
-	prAddCmd.Flags().StringVar(&prflags.DockerPassword, "password", "", "Registry Email")
+	prAddCmd.Flags().StringVar(&prflags.SecretName, "secret-name", "secret-registry", "Registry Secret Name")
+	prAddCmd.Flags().StringVar(&prflags.Server, "server", "", "Registry Address")
+	prAddCmd.MarkFlagRequired("server")
+	prAddCmd.Flags().StringVar(&prflags.Email, "email", "user@default.email.com", "Registry Email")
+	prAddCmd.Flags().StringVar(&prflags.Username, "username", "", "Registry Username")
+	prAddCmd.MarkFlagRequired("username")
+	prAddCmd.Flags().StringVar(&prflags.Password, "password", "", "Registry Password")
+	prAddCmd.MarkFlagRequired("password")
 
+	prAddCmd.InitDefaultHelpFlag()
 	return prAddCmd
 }
