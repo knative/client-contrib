@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -45,6 +46,12 @@ kn admin domain set --custom-domain mydomain.com
 # To set a route domain for service having label app=v1
 kn admin domain set --custom-domain mydomain.com --selector app=v1
 `,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if domain == "" {
+				return errors.New("'domain set' requires the route name to run provided with the --custom-domain option")
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			currentCm := &corev1.ConfigMap{}
 			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
@@ -94,7 +101,11 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 	}
 
 	domainSetCommand.Flags().StringVarP(&domain, "custom-domain", "d", "", "Desired custom domain")
+	domainSetCommand.MarkFlagRequired("custom-domain")
 	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "Domain selector")
+
+	domainSetCommand.InitDefaultHelpFlag()
+
 	return domainSetCommand
 }
 

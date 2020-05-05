@@ -21,8 +21,6 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/command"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/domain"
@@ -35,23 +33,7 @@ var cfgFile string
 
 func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	p := &pkg.AdminParams{}
-	kubeConfig := os.Getenv("KUBECONFIG")
-	if kubeConfig == "" {
-		fmt.Println("cannot get cluster kube config, please export environment variable KUBECONFIG")
-		os.Exit(1)
-	}
-
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		fmt.Println("failed to build config:", err)
-		os.Exit(1)
-	}
-
-	p.ClientSet, err = kubernetes.NewForConfig(cfg)
-	if err != nil {
-		fmt.Println("failed to create client:", err)
-		os.Exit(1)
-	}
+	p.Initialize()
 
 	rootCmd := &cobra.Command{
 		Use:   "kn\u00A0admin",
@@ -70,6 +52,9 @@ kn admin registry add - to add registry with credentials
 	rootCmd.AddCommand(domain.NewDomainCmd(p))
 	rootCmd.AddCommand(private_registry.NewPrivateRegistryCmd(p))
 	rootCmd.AddCommand(command.NewVersionCommand())
+
+	// Add default help page if there's unknown command
+	rootCmd.InitDefaultHelpCmd()
 	return rootCmd
 }
 
