@@ -16,8 +16,8 @@
 
 set -o pipefail
 
-# Name of the plugin
-PLUGIN="kn-source_kafka"
+PLUGIN="kn-source-kafka"
+
 source_dirs="cmd pkg test"
 
 # Store for later
@@ -89,7 +89,7 @@ run() {
   go_test
 
   echo "────────────────────────────────────────────"
-  ./$PLUGIN
+  ./kn-source-kafka
 }
 
 
@@ -102,6 +102,9 @@ codegen() {
 
   # Check for license headers
   check_license
+
+  # Auto generate cli docs
+  generate_docs
 }
 
 go_fmt() {
@@ -127,13 +130,20 @@ source_format() {
   set -e
 }
 
+generate_docs() {
+  echo "📖 Docs"
+  rm -rf "./docs/cmd"
+  mkdir -p "./docs/cmd"
+  go run "./hack/generate-docs.go" "."
+}
+
 go_build() {
   echo "🚧 Compile"
   go build -ldflags "$(build_flags $(basedir))" -o $PLUGIN ./cmd/...
 }
 
 go_test() {
-  local test_output=$(mktemp /tmp/${PLUGIN}-test-output.XXXXXX)
+  local test_output=$(mktemp /tmp/kn-source-kafka-test-output.XXXXXX)
 
   local red=""
   local reset=""
@@ -161,7 +171,7 @@ check_license() {
   local required_keywords=("Authors" "Apache License" "LICENSE-2.0")
   local extensions_to_check=("sh" "go" "yaml" "yml" "json")
 
-  local check_output=$(mktemp /tmp/${PLUGIN}-licence-check.XXXXXX)
+  local check_output=$(mktemp /tmp/kn-source-kafka-licence-check.XXXXXX)
   for ext in "${extensions_to_check[@]}"; do
     find . -name "*.$ext" -a \! -path "./vendor/*" -a \! -path "./.*" -print0 |
       while IFS= read -r -d '' path; do
@@ -296,7 +306,7 @@ apply_emoji_fixes() {
 display_help() {
     local command="${1:-}"
     cat <<EOT
-Build script for Kn plugin $PLUGIN
+Knative client build script
 
 Usage: $(basename $BASH_SOURCE) [... options ...]
 
@@ -314,7 +324,7 @@ with the following options:
 You can add a symbolic link to this build script into your PATH so that it can be
 called from everywhere. E.g.:
 
-ln -s $(basedir)/hack/build.sh /usr/local/bin/$PLUGIN_build.sh
+ln -s $(basedir)/hack/build.sh /usr/local/bin/kn_build.sh
 
 Examples:
 
