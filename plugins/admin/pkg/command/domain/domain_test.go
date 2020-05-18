@@ -11,19 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package main
+
+package domain
 
 import (
-	"fmt"
-	"os"
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"knative.dev/client-contrib/plugins/admin/core"
+	"testing"
 )
 
-func main() {
-	if err := core.NewAdminCommand().Execute(); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+func TestNewDomainCmd(t *testing.T) {
+	cmd := NewDomainCmd(nil)
+	if !cmd.HasSubCommands() {
+		t.Error("cmd domain should have subcommands")
+	}
+
+	if len(cmd.Commands()) != 2 {
+		t.Errorf("expected 2 subcommands, got %d", len(cmd.Commands()))
+	}
+	_, _, err := cmd.Find([]string{"set"})
+	if err != nil {
+		t.Error(err)
+	}
+	_, _, err = cmd.Find([]string{"help"})
+	if err != nil {
+		t.Error(err)
 	}
 }

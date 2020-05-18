@@ -17,7 +17,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"knative.dev/client-contrib/plugins/admin/pkg"
@@ -26,14 +25,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
 var selector []string
 var domain string
 
-// updateCmd represents the update command
-
+// NewDomainSetCommand return the command to set knative custom domain
 func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainSetCommand := &cobra.Command{
 		Use:   "set",
@@ -52,14 +49,12 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			currentCm := &corev1.ConfigMap{}
 			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
 			if err != nil {
-				fmt.Println("failed to get ConfigMaps:", err)
-				os.Exit(1)
+				return fmt.Errorf("Failed to get ConfigMaps: %+v", err)
 			}
-
 			desiredCm := currentCm.DeepCopy()
 			labels := "selector:\n"
 			for _, label := range selector {
@@ -76,10 +71,6 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			}
 
 			for k, v := range desiredCm.Data {
-				if k == domain && v == "" {
-					delete(desiredCm.Data, k)
-					break
-				}
 				if v == value {
 					delete(desiredCm.Data, k)
 					break
@@ -90,13 +81,13 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			if !equality.Semantic.DeepEqual(desiredCm.Data, currentCm.Data) {
 				_, err = p.ClientSet.CoreV1().ConfigMaps("knative-serving").Update(desiredCm)
 				if err != nil {
-					fmt.Println("failed to update ConfigMaps:", err)
-					os.Exit(1)
+					return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
 				}
-				fmt.Printf("Updated Knative route domain %s\n", domain)
+				cmd.Printf("Updated Knative route domain to %q\n", domain)
 			} else {
-				fmt.Printf("Knative route domain %s not changed\n", domain)
+				cmd.Printf("Knative route domain %q not changed\n", domain)
 			}
+			return nil
 		},
 	}
 
@@ -111,8 +102,8 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 
 func splitByEqualSign(pair string) (string, string, error) {
 	parts := strings.Split(pair, "=")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
 		return "", "", fmt.Errorf("expecting the value format in value1=value2, given %s", pair)
 	}
-	return parts[0], strings.TrimSuffix(parts[1], "%"), nil
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
 }

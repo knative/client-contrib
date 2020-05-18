@@ -27,7 +27,7 @@ import (
 type AdminParams struct {
 	KubeCfgPath  string
 	ClientConfig clientcmd.ClientConfig
-	ClientSet    *kubernetes.Clientset
+	ClientSet    kubernetes.Interface
 }
 
 func (params *AdminParams) Initialize() error {
