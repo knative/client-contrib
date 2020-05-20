@@ -25,7 +25,7 @@ export DISABLE_MD_LINK_CHECK=1
 
 export PRESUBMIT_TEST_FAIL_FAST=1
 export GO111MODULE=on
-
+set -x
 source $(dirname $0)/../../../test-infra/scripts/presubmit-tests.sh
 
 # Run cross platform build to ensure kn compiles for Linux, macOS and Windows
