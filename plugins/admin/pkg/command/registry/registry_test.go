@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package registry
 
 import (
 	"testing"
@@ -20,14 +20,14 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestNewDomainCmd(t *testing.T) {
-	cmd := NewDomainCmd(nil)
-	assert.Check(t, cmd.HasSubCommands(), "cmd domain should have subcommands")
-	assert.Equal(t, len(cmd.Commands()), 2, "domain command should have 2 subcommands")
+func TestNewPrivateRegistryCmd(t *testing.T) {
+	cmd := NewPrivateRegistryCmd(nil)
+	assert.Check(t, cmd.HasSubCommands(), "cmd registry should have subcommands")
+	assert.Equal(t, len(cmd.Commands()), 2, "registry command should have 2 subcommands")
 
-	_, _, err := cmd.Find([]string{"set"})
-	assert.NilError(t, err, "domain command should have set subcommand")
+	_, _, err := cmd.Find([]string{"add"})
+	assert.NilError(t, err, "registry command should have add subcommand")
 
 	_, _, err = cmd.Find([]string{"help"})
-	assert.NilError(t, err, "domain command should have help subcommand")
+	assert.NilError(t, err, "registry command should have help subcommand")
 }

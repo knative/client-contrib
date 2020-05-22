@@ -14,7 +14,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -23,7 +22,6 @@ import (
 
 func main() {
 	if err := core.NewAdminCommand().Execute(); err != nil {
-		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 }

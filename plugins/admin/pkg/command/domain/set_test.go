@@ -21,11 +21,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"knative.dev/client-contrib/plugins/admin/pkg"
+
+	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
 
 type domainSelector struct {
@@ -56,10 +59,9 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, _, err := executeCommandC(cmd, "--custom-domain", "")
-		if err == nil {
-			t.Errorf("expected error when config-domain is empty")
-		}
+
+		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "")
+		assert.ErrorContains(t, err, "requires the route name", err)
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
@@ -68,13 +70,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, _, err := executeCommandC(cmd, "--custom-domain", "dummy.domain")
-		if err == nil {
-			t.Errorf("expected error when config-domain configmap does not exist")
-		}
-		if !strings.HasPrefix(err.Error(), "Failed to get ConfigMaps:") {
-			t.Errorf("unexpected error string: %+v", err)
-		}
+		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
+		assert.ErrorContains(t, err, "failed to get configmaps", err)
 	})
 
 	t.Run("setting domain config without selector", func(t *testing.T) {
@@ -90,26 +87,16 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, _, err := executeCommandC(cmd, "--custom-domain", "dummy.domain")
-		if err != nil {
-			t.Errorf("unexpected error %+v", err)
-		}
+		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
+		assert.NilError(t, err)
 
 		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
-		if err != nil {
-			t.Error(err)
-		}
+		assert.NilError(t, err)
+		assert.Check(t, len(cm.Data) == 1, "expected configmap lengh to be 1")
 
-		if len(cm.Data) != 1 {
-			t.Errorf("expected configmap lengh to be 1, actual %d", len(cm.Data))
-		}
 		v, ok := cm.Data["dummy.domain"]
-		if !ok {
-			t.Errorf("domain key %q does not exists", "dummy.domain")
-		}
-		if v != "" {
-			t.Errorf("value of key domain is not empty: %q", v)
-		}
+		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
+		assert.Equal(t, v, "", "value of key domain should beempty")
 	})
 
 	t.Run("setting domain config with unchanged value", func(t *testing.T) {
@@ -127,19 +114,13 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, _, err := executeCommandC(cmd, "--custom-domain", "dummy.domain")
-		if err != nil {
-			t.Errorf("unexpected error %+v", err)
-		}
+
+		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
+		assert.NilError(t, err)
 
 		updated, err := client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
-		if err != nil {
-			t.Error(err)
-		}
-
-		if !equality.Semantic.DeepEqual(updated, cm) {
-			t.Error("configmap should not changed")
-		}
+		assert.NilError(t, err)
+		assert.Check(t, equality.Semantic.DeepEqual(updated, cm), "configmap should not changed")
 
 	})
 
@@ -158,30 +139,17 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, o, err := executeCommandC(cmd, "--custom-domain", "dummy.domain")
-		if err != nil {
-			t.Errorf("unexpected error %+v", err)
-		}
-		if o == "" {
-			t.Error("expected update information in standard output. got empty.")
-		}
+		o, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
+		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(o, "Updated knative route domain to"), "expected update information in standard output")
 
 		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
-		if err != nil {
-			t.Error(err)
-		}
+		assert.NilError(t, err)
+		assert.Check(t, len(cm.Data) == 1, "expected configmap lengh to be 1, actual %d", len(cm.Data))
 
-		if len(cm.Data) != 1 {
-			t.Errorf("expected configmap lengh to be 1, actual %d", len(cm.Data))
-		}
 		v, ok := cm.Data["dummy.domain"]
-		if !ok {
-			t.Errorf("domain key %q does not exists", "dummy.domain")
-		}
-		if v != "" {
-			t.Errorf("value of key domain is not empty: %q", v)
-		}
-
+		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
+		assert.Equal(t, v, "", "value of key domain should beempty")
 	})
 
 	t.Run("adding domain config with selector", func(t *testing.T) {
@@ -199,42 +167,26 @@ func TestNewDomainSetCommand(t *testing.T) {
 			ClientSet: client,
 		}
 		cmd := NewDomainSetCommand(&p)
-		_, o, err := executeCommandC(cmd, "--custom-domain", "dummy.domain", "--selector", "app=dummy")
-		if err != nil {
-			t.Errorf("unexpected error %+v", err)
-		}
-		if o == "" {
-			t.Error("expected update information in standard output. got empty.")
-		}
+
+		o, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain", "--selector", "app=dummy")
+		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(o, "Updated knative route domain to"), "invalid output %q", o)
 
 		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
-		if err != nil {
-			t.Error(err)
-		}
+		assert.NilError(t, err)
+		assert.Check(t, len(cm.Data) == 2, "expected configmap lengh to be 2, actual %d", len(cm.Data))
 
-		if len(cm.Data) != 2 {
-			t.Errorf("expected configmap lengh to be 2, actual %d", len(cm.Data))
-		}
 		v, ok := cm.Data["dummy.domain"]
-		if !ok {
-			t.Errorf("domain key %q does not exists", "dummy.domain")
-		}
+		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
 
 		var s domainSelector
 		err = yaml.Unmarshal([]byte(v), &s)
-		if err != nil {
-			t.Errorf("unmarshal domain config error %v", v)
-		}
-		if len(s.Selector) != 1 {
-			t.Errorf("selector should only contain one key-value pair, got %+v", s.Selector)
-		}
+		assert.NilError(t, err)
+		assert.Check(t, len(s.Selector) == 1, "selector should only contain one key-value pair, got %+v", s.Selector)
+
 		v, ok = s.Selector["app"]
-		if !ok {
-			t.Errorf("key %q dose not exist", "app")
-		}
-		if v != "dummy" {
-			t.Errorf("got unexpected value %q", v)
-		}
+		assert.Check(t, ok, "key %q should exist", "app")
+		assert.Equal(t, v, "dummy")
 	})
 }
 

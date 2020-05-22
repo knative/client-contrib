@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package testutil
 
 import (
-	"testing"
+	"bytes"
 
-	"gotest.tools/assert"
+	"github.com/spf13/cobra"
 )
 
-func TestNewDomainCmd(t *testing.T) {
-	cmd := NewDomainCmd(nil)
-	assert.Check(t, cmd.HasSubCommands(), "cmd domain should have subcommands")
-	assert.Equal(t, len(cmd.Commands()), 2, "domain command should have 2 subcommands")
+// ExecuteCommandC execute cobra.command and catch the output
+func ExecuteCommandC(root *cobra.Command, args ...string) (c *cobra.Command, output string, err error) {
+	buf := new(bytes.Buffer)
+	root.SetOut(buf)
+	root.SetErr(buf)
+	root.SetArgs(args)
+	c, err = root.ExecuteC()
+	return c, buf.String(), err
+}
 
-	_, _, err := cmd.Find([]string{"set"})
-	assert.NilError(t, err, "domain command should have set subcommand")
-
-	_, _, err = cmd.Find([]string{"help"})
-	assert.NilError(t, err, "domain command should have help subcommand")
+// ExecuteCommand similar to ExecuteCommandC but does not return *cobra.Command
+func ExecuteCommand(root *cobra.Command, args ...string) (output string, err error) {
+	_, o, err := ExecuteCommandC(root, args...)
+	return o, err
 }

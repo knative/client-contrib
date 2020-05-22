@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package core
 
 import (
 	"testing"
@@ -20,14 +20,26 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestNewDomainCmd(t *testing.T) {
-	cmd := NewDomainCmd(nil)
-	assert.Check(t, cmd.HasSubCommands(), "cmd domain should have subcommands")
-	assert.Equal(t, len(cmd.Commands()), 2, "domain command should have 2 subcommands")
+func TestNewAdminCommand(t *testing.T) {
 
-	_, _, err := cmd.Find([]string{"set"})
-	assert.NilError(t, err, "domain command should have set subcommand")
+	t.Run("check subcommands", func(t *testing.T) {
 
-	_, _, err = cmd.Find([]string{"help"})
-	assert.NilError(t, err, "domain command should have help subcommand")
+		expectedSubCommands := []string{
+			"version",
+			"help",
+			"domain",
+			"registry",
+		}
+
+		cmd := NewAdminCommand()
+		assert.Check(t, cmd.HasSubCommands())
+		assert.Equal(t, len(cmd.Commands()), len(expectedSubCommands))
+
+		for _, e := range expectedSubCommands {
+			_, _, err := cmd.Find([]string{e})
+			assert.NilError(t, err, "root command should have subcommand %q", e)
+
+		}
+	})
+
 }

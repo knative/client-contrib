@@ -35,7 +35,7 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainSetCommand := &cobra.Command{
 		Use:   "set",
 		Short: "set route domain",
-		Long: `set Knative route domain for service
+		Long: `Set Knative route domain for service
 
 For example:
 # To set a default route domain
@@ -44,8 +44,9 @@ kn admin domain set --custom-domain mydomain.com
 kn admin domain set --custom-domain mydomain.com --selector app=v1
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			domain = strings.TrimSpace(domain)
 			if domain == "" {
-				return errors.New("'domain set' requires the route name to run provided with the --custom-domain option")
+				return errors.New("'domain set' requires the route name provided with the --custom-domain option")
 			}
 			return nil
 		},
@@ -53,7 +54,7 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			currentCm := &corev1.ConfigMap{}
 			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("Failed to get ConfigMaps: %+v", err)
+				return fmt.Errorf("failed to get configmaps: %+v", err)
 			}
 			desiredCm := currentCm.DeepCopy()
 			labels := "selector:\n"
@@ -83,7 +84,7 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 				if err != nil {
 					return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
 				}
-				cmd.Printf("Updated Knative route domain to %q\n", domain)
+				cmd.Printf("Updated knative route domain to %q\n", domain)
 			} else {
 				cmd.Printf("Knative route domain %q not changed\n", domain)
 			}
@@ -91,10 +92,9 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 		},
 	}
 
-	domainSetCommand.Flags().StringVarP(&domain, "custom-domain", "d", "", "Desired custom domain")
+	domainSetCommand.Flags().StringVarP(&domain, "custom-domain", "d", "", "desired custom domain")
 	domainSetCommand.MarkFlagRequired("custom-domain")
-	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "Domain selector")
-
+	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "domain selector")
 	domainSetCommand.InitDefaultHelpFlag()
 
 	return domainSetCommand

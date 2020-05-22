@@ -15,8 +15,6 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +28,9 @@ func NewVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Prints the plugin version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "Version:      %s\n", Version)
-			fmt.Fprintf(out, "Build Date:   %s\n", BuildDate)
-			fmt.Fprintf(out, "Git Revision: %s\n", GitRevision)
+			cmd.Printf("Version:      %s\n", Version)
+			cmd.Printf("Build Date:   %s\n", BuildDate)
+			cmd.Printf("Git Revision: %s\n", GitRevision)
 			return nil
 		},
 	}
