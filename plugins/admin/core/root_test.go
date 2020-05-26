@@ -33,12 +33,11 @@ func TestNewAdminCommand(t *testing.T) {
 
 		cmd := NewAdminCommand()
 		assert.Check(t, cmd.HasSubCommands())
-		assert.Equal(t, len(cmd.Commands()), len(expectedSubCommands))
+		assert.Equal(t, len(expectedSubCommands), len(cmd.Commands()))
 
 		for _, e := range expectedSubCommands {
 			_, _, err := cmd.Find([]string{e})
 			assert.NilError(t, err, "root command should have subcommand %q", e)
-
 		}
 	})
 

@@ -84,16 +84,16 @@ func TestNewPrAddCommand(t *testing.T) {
 
 		secrets, err := client.CoreV1().Secrets(sa.Namespace).List(metav1.ListOptions{})
 		assert.NilError(t, err)
-		assert.Equal(t, len(secrets.Items), 1, "got secrets: %#v", secrets)
+		assert.Equal(t, 1, len(secrets.Items), "got secrets: %#v", secrets)
 
 		secret := secrets.Items[0]
-		assert.Equal(t, secret.Type, corev1.SecretTypeDockerConfigJson)
-		assert.Equal(t, secret.GenerateName, "secret-registry-")
+		assert.Equal(t, corev1.SecretTypeDockerConfigJson, secret.Type)
+		assert.Equal(t, "secret-registry-", secret.GenerateName)
 
 		saUpdated, err := client.CoreV1().ServiceAccounts(sa.Namespace).Get(sa.Name, metav1.GetOptions{})
 		assert.NilError(t, err)
-		assert.Equal(t, len(saUpdated.ImagePullSecrets), 1)
-		assert.Equal(t, saUpdated.ImagePullSecrets[0].Name, secret.Name)
+		assert.Equal(t, 1, len(saUpdated.ImagePullSecrets))
+		assert.Equal(t, secret.Name, saUpdated.ImagePullSecrets[0].Name)
 
 		data, ok := secret.Data[".dockerconfigjson"]
 		assert.Check(t, ok)
@@ -104,9 +104,9 @@ func TestNewPrAddCommand(t *testing.T) {
 
 		rc, ok := r.Auths["docker.io"]
 		assert.Check(t, ok)
-		assert.Equal(t, rc.Username, "user")
-		assert.Equal(t, rc.Password, "dummy")
-		assert.Equal(t, rc.Email, "user@default.email.com")
+		assert.Equal(t, "user", rc.Username)
+		assert.Equal(t, "dummy", rc.Password)
+		assert.Equal(t, "user@default.email.com", rc.Email)
 
 	})
 
@@ -136,7 +136,7 @@ func TestNewPrAddCommand(t *testing.T) {
 
 		saUpdated, err := client.CoreV1().ServiceAccounts(sa.Namespace).Get(sa.Name, metav1.GetOptions{})
 		assert.NilError(t, err)
-		assert.Equal(t, len(saUpdated.ImagePullSecrets), 2)
+		assert.Equal(t, 2, len(saUpdated.ImagePullSecrets))
 	})
 }
 

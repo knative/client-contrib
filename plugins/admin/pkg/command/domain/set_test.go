@@ -96,7 +96,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		v, ok := cm.Data["dummy.domain"]
 		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
-		assert.Equal(t, v, "", "value of key domain should beempty")
+		assert.Equal(t, "", v, "value of key domain should beempty")
 	})
 
 	t.Run("setting domain config with unchanged value", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		v, ok := cm.Data["dummy.domain"]
 		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
-		assert.Equal(t, v, "", "value of key domain should beempty")
+		assert.Equal(t, "", v, "value of key domain should beempty")
 	})
 
 	t.Run("adding domain config with selector", func(t *testing.T) {
@@ -186,7 +186,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		v, ok = s.Selector["app"]
 		assert.Check(t, ok, "key %q should exist", "app")
-		assert.Equal(t, v, "dummy")
+		assert.Equal(t, "dummy", v)
 	})
 }
 

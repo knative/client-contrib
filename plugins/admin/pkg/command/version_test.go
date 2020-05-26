@@ -42,5 +42,5 @@ func TestVersionOutput(t *testing.T) {
 	versionCmd := NewVersionCommand()
 	out, err := testutil.ExecuteCommand(versionCmd)
 	assert.NilError(t, err)
-	assert.Equal(t, out, expectedOutput)
+	assert.Equal(t, expectedOutput, out)
 }
