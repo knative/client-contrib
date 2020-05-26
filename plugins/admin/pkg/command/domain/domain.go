@@ -19,7 +19,7 @@ import (
 	"knative.dev/client-contrib/plugins/admin/pkg"
 )
 
-// domainCmd represents the domain command
+// NewDomainCmd return the domain root command
 func NewDomainCmd(p *pkg.AdminParams) *cobra.Command {
 	var domainCmd = &cobra.Command{
 		Use:   "domain",

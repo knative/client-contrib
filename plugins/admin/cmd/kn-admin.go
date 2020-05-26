@@ -14,15 +14,14 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"knative.dev/client-contrib/plugins/admin/core"
 )
 
 func main() {
 	if err := core.NewAdminCommand().Execute(); err != nil {
-		fmt.Println("failed to execute admin command:", err)
 		os.Exit(1)
 	}
 }
