@@ -8,7 +8,7 @@ function loop_over_plugins() {
   local basedir=$(basedir)
 
   # Environment variable which can be used my plugins
-  export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
+  export TEST_INFRA_SCRIPTS="$basedir/scripts/test-infra"
 
 
   plugins=$(list_plugins_changed_in_pr)

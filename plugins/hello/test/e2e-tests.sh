@@ -15,7 +15,7 @@
 # ===============================================
 # Add you integration tests here
 
-source "$(dirname $0)"/../../../test-infra/scripts/e2e-tests.sh
+source "$(dirname $0)"/../../../scripts/test-infra/e2e-tests.sh
 
 echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
 echo "Testing hello"
