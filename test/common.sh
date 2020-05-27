@@ -7,10 +7,6 @@ function loop_over_plugins() {
 
   local basedir=$(basedir)
 
-  # Environment variable which can be used my plugins
-  export TEST_INFRA_SCRIPTS="$basedir/test-infra/scripts"
-
-
   plugins=$(list_plugins_changed_in_pr)
   echo "--- Plugins changed in PR: ----------------"
   echo "$plugins"
@@ -20,7 +16,7 @@ function loop_over_plugins() {
     local test_script="${plugin_dir}/test/$script"
     if [ -x "$test_script" ]; then
       echo "## $plugin ###############################"
-      bash -c "REPO_ROOT_DIR=$plugin_dir $test_script $opts"
+      bash -c "TEST_INFRA_SCRIPTS=\"$TEST_INFRA_SCRIPTS\" REPO_ROOT_DIR=\"$plugin_dir\" $test_script $opts"
       local err=$?
       if [ $err -gt 0 ]; then
         fail_sub_test "Plugin $plugin failed with $err"
@@ -73,3 +69,6 @@ function cluster_setup() {
   go get knative.dev/client
   go install knative.dev/client/cmd/kn
 }
+
+# Environment variable which can be used my plugins
+export TEST_INFRA_SCRIPTS="$(basedir)/scripts/test-infra"
