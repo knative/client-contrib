@@ -35,8 +35,8 @@ export DISABLE_MD_LINTING=1
 
 export GO111MODULE=on
 
-source "$(dirname $0)"/../test-infra/scripts/presubmit-tests.sh
 source "$(dirname $0)"/common.sh
+source "$TEST_INFRA_SCRIPTS/presubmit-tests.sh"
 
 # Dispatch unit tests
 function unit_tests() {
@@ -51,4 +51,3 @@ function build_tests() {
 }
 # We use the default build and integration test runners.
 main "$@"
-

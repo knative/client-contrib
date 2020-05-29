@@ -22,6 +22,9 @@ I.e. it demonstrates:
 
 [kn-admin](plugins/admin/README.adoc) helps in configuring a Knative installation on Kubernetes.
 
+### kn-migration
+
+[kn-migration](plugins/migration/README.adoc) helps in migrating the Knative services from source cluster to destination cluster.
 
 _list of plugins to be continued ..._
 

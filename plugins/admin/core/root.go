@@ -48,7 +48,7 @@ kn admin registry add - to add registry with credentials
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kn/plugins/admin.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	//
+
 	rootCmd.AddCommand(domain.NewDomainCmd(p))
 	rootCmd.AddCommand(private_registry.NewPrivateRegistryCmd(p))
 	rootCmd.AddCommand(command.NewVersionCommand())

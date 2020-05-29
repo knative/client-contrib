@@ -15,11 +15,11 @@
 package command
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
+	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
 
 var versionOutputTemplate = `Version:      %s
@@ -33,29 +33,14 @@ const (
 	fakeGitRevision = "fake-git-revision"
 )
 
-func TestVersionSetup(t *testing.T) {
-	versionCmd := NewVersionCommand()
-	assert.Equal(t, versionCmd.Use, "version")
-	assert.Equal(t, versionCmd.Short, "Prints the plugin version")
-	assert.Assert(t, versionCmd.RunE != nil)
-}
-
 func TestVersionOutput(t *testing.T) {
 	Version = fakeVersion
 	BuildDate = fakeBuildDate
 	GitRevision = fakeGitRevision
 	expectedOutput := fmt.Sprintf(versionOutputTemplate, fakeVersion, fakeBuildDate, fakeGitRevision)
 
-	out, err := runVersionCmd()
-	assert.NilError(t, err)
-	assert.Equal(t, out, expectedOutput)
-}
-
-func runVersionCmd() (string, error) {
 	versionCmd := NewVersionCommand()
-
-	output := new(bytes.Buffer)
-	versionCmd.SetOut(output)
-	err := versionCmd.Execute()
-	return output.String(), err
+	out, err := testutil.ExecuteCommand(versionCmd)
+	assert.NilError(t, err)
+	assert.Equal(t, expectedOutput, out)
 }
