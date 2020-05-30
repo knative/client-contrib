@@ -17,7 +17,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"knative.dev/client-contrib/plugins/admin/pkg"
 
@@ -45,12 +44,11 @@ kn admin domain unset --custom-domain mydomain.com
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			currentCm := &corev1.ConfigMap{}
 			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
 			if err != nil {
-				fmt.Println("failed to get ConfigMaps:", err)
-				os.Exit(1)
+				return fmt.Errorf("failed to get configmaps: %+v", err)
 			}
 
 			desiredCm := currentCm.DeepCopy()
@@ -59,16 +57,15 @@ kn admin domain unset --custom-domain mydomain.com
 			if ok {
 				delete(desiredCm.Data, domain)
 			} else {
-				fmt.Printf("Knative route domain %s not found\n", domain)
-				os.Exit(1)
+				return fmt.Errorf("Knative route domain %s not found\n", domain)
 			}
 
 			_, err = p.ClientSet.CoreV1().ConfigMaps("knative-serving").Update(desiredCm)
 			if err != nil {
-				fmt.Println("failed to update ConfigMaps:", err)
-				os.Exit(1)
+				return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
 			}
-			fmt.Printf("Unset Knative route domain %s\n", domain)
+			cmd.Printf("Unset Knative route domain %s\n", domain)
+			return nil
 		},
 	}
 
