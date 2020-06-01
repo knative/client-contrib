@@ -26,8 +26,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-// updateCmd represents the update command
-
 func NewDomainUnSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainUnSetCommand := &cobra.Command{
 		Use:   "unset",

@@ -24,7 +24,7 @@ func NewDomainCmd(p *pkg.AdminParams) *cobra.Command {
 	var domainCmd = &cobra.Command{
 		Use:   "domain",
 		Short: "Manage route domain",
-		Long: `Set default route domain or custom route domain for Service with selectors, also support unset route domain. For example:
+		Long: `Manage default route domain or custom route domain for Service with selectors. For example:
 
 kn admin domain set - to set Knative route domain
 

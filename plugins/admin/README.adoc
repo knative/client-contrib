@@ -46,6 +46,7 @@ Usage:
 
 Available Commands:
   set         set route domain
+  unset       unset route domain
 
 Flags:
   -h, --help   help for domain
@@ -105,6 +106,14 @@ Updated Knative route domain mydomain.com
 ----
 $ kn admin domain set --custom-domain test.com --selector app=v1
 Updated Knative route domain test.com
+----
+====
+
+.Unset a route domain
+====
+----
+$ kn-admin domain unset  --custom-domain mydomain.com
+Unset Knative route domain mydomain.com
 ----
 ====
 
