@@ -112,7 +112,7 @@ Updated Knative route domain test.com
 .Unset a route domain
 ====
 ----
-$ kn-admin domain unset  --custom-domain mydomain.com
+$ kn-admin domain unset --custom-domain mydomain.com
 Unset Knative route domain mydomain.com
 ----
 ====
