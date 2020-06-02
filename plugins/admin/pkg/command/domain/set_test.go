@@ -49,8 +49,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 	t.Run("incompleted args", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: make(map[string]string),
 		}
@@ -71,14 +71,14 @@ func TestNewDomainSetCommand(t *testing.T) {
 		}
 		cmd := NewDomainSetCommand(&p)
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
-		assert.ErrorContains(t, err, "failed to get configmaps", err)
+		assert.ErrorContains(t, err, "failed to get ConfigMap", err)
 	})
 
 	t.Run("setting domain config without selector", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: make(map[string]string),
 		}
@@ -90,7 +90,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.NilError(t, err)
 
-		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		cm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, len(cm.Data) == 1, "expected configmap lengh to be 1")
 
@@ -102,8 +102,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 	t.Run("setting domain config with unchanged value", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: map[string]string{
 				"dummy.domain": "",
@@ -118,7 +118,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.NilError(t, err)
 
-		updated, err := client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		updated, err := client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, equality.Semantic.DeepEqual(updated, cm), "configmap should not changed")
 
@@ -127,8 +127,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 	t.Run("adding domain config without selector with existing domain configuration", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: map[string]string{
 				"foo.bar": "",
@@ -141,9 +141,9 @@ func TestNewDomainSetCommand(t *testing.T) {
 		cmd := NewDomainSetCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(o, "Updated knative route domain to"), "expected update information in standard output")
+		assert.Check(t, strings.Contains(o, "Set knative route domain \"dummy.domain\""), "expected update information in standard output")
 
-		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		cm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, len(cm.Data) == 1, "expected configmap lengh to be 1, actual %d", len(cm.Data))
 
@@ -155,8 +155,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 	t.Run("adding domain config with selector", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: map[string]string{
 				"foo.bar": "",
@@ -170,9 +170,9 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		o, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain", "--selector", "app=dummy")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(o, "Updated knative route domain to"), "invalid output %q", o)
+		assert.Check(t, strings.Contains(o, "Set knative route domain \"dummy.domain\" with selector [app=dummy]"), "invalid output %q", o)
 
-		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		cm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, len(cm.Data) == 2, "expected configmap lengh to be 2, actual %d", len(cm.Data))
 

@@ -41,16 +41,16 @@ var registryFlags registrycmdFlags
 func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 	var registryAddCmd = &cobra.Command{
 		Use:   "add",
-		Short: "add registry with credentials",
-		Long: `add registry with credentials to enable Service deployment from it
-For example:
-
-kn admin registry add \
-  --secret-name=[SECRET_NAME]
-  --server=[REGISTRY_SERVER_URL] \
-  --email=[REGISTRY_EMAIL] \
-  --username=[REGISTRY_USER] \
-  --password=[REGISTRY_PASSWORD]`,
+		Short: "Add registry with credentials",
+		Long:  `Add registry with credentials to enable Service deployment from it`,
+		Example: `
+  # add registry with credentials
+  kn admin registry add \
+    --secret-name=[SECRET_NAME]
+    --server=[REGISTRY_SERVER_URL] \
+    --email=[REGISTRY_EMAIL] \
+    --username=[REGISTRY_USER] \
+    --password=[REGISTRY_PASSWORD]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if registryFlags.Username == "" {
 				return errors.New("'registry add' requires the registry username to run provided with the --username option")
