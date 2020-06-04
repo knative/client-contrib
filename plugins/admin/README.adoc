@@ -16,21 +16,24 @@ A plugin of kn client to manage Knative for administrators.
 For example:
 kn admin domain set - to set Knative route domain
 kn admin private-registry enable - to enable deployment from the private registry
+kn admin autoscaling update - to manage autoscaling config
 
 Usage:
   kn admin [command]
 
 Available Commands:
-  domain           Manage route domain
-  help             Help about any command
-  private-registry Manage private-registry
+  autoscaling Manage autoscaling config
+  domain      Manage route domain
+  help        Help about any command
+  registry    Manage registry
+  version     Prints the plugin version
 
 Flags:
-      --config string   config file (default is $HOME/.config/kn/plugins/kn-admin.yaml)
-  -h, --help            help for admin
+      --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
+  -h, --help            help for kn admin
   -t, --toggle          Help message for toggle
 
-Use "admin [command] --help" for more information about a command.
+Use "kn admin [command] --help" for more information about a command.
 ----
 
 #### `kn admin domain`
@@ -66,11 +69,9 @@ Manage Service deployment from a private registry
 For example:
 
 kn admin registry add \
-  --secret-name=[SECRET_NAME]
-  --docker-server=[PRIVATE_REGISTRY_SERVER_URL] \
-  --docker-email=[PRIVATE_REGISTRY_EMAIL] \
-  --docker-username=[PRIVATE_REGISTRY_USER] \
-  --docker-password=[PRIVATE_REGISTRY_PASSWORD]
+  --server=[REGISTRY_SERVER_URL] \
+  --username=[REGISTRY_USER] \
+  --password=[REGISTRY_PASSWORD]
 
 Usage:
   kn admin registry [command]
@@ -88,6 +89,28 @@ Use "admin registry [command] --help" for more information about a command.
 
 ----
 
+#### `kn admin autoscaling`
+
+----
+Manage autoscaling provided by Knative Pod Autoscaler (KPA). For example:
+
+kn admin autoscaling update - to manage autoscaling config
+
+Usage:
+  kn admin autoscaling [command]
+
+Available Commands:
+  update      update autoscaling config
+
+Flags:
+  -h, --help   help for autoscaling
+
+Global Flags:
+      --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
+
+Use "kn admin autoscaling [command] --help" for more information about a command.
+
+----
 ### Examples
 
 #### As a Knative administrator, I want to update Knative route domain with my custom domain.
@@ -123,10 +146,18 @@ Unset Knative route domain mydomain.com
 =====
 -----
 $ kn admin registry add \
-  --secret-name=[SECRET_NAME]
-  --docker-server=[PRIVATE_REGISTRY_SERVER_URL] \
-  --docker-email=[PRIVATE_REGISTRY_EMAIL] \
-  --docker-username=[PRIVATE_REGISTRY_USER] \
-  --docker-password=[PRIVATE_REGISTRY_PASSWORD]
+  --server=[REGISTRY_SERVER_URL] \
+  --username=[REGISTRY_USER] \
+  --password=[REGISTRY_PASSWORD]
+-----
+=====
+
+#### As a Knative administrator, I want to enable scale-to-zero for autoscaling.
+
+.Enable scale-to-zero for autoscaling.
+=====
+-----
+$ kn admin autoscaling update --scale-to-zero
+Updated Knative autoscaling config enable-scale-to-zero: true
 -----
 =====
