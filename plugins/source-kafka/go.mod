@@ -1,6 +1,6 @@
 module knative.dev/client-contrib/plugins/source-kafka
 
-go 1.13
+go 1.14
 
 require (
 	github.com/maximilien/kn-source-pkg v0.4.0

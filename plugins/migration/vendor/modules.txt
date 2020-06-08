@@ -5,10 +5,13 @@ cloud.google.com/go/internal/version
 cloud.google.com/go/monitoring/apiv3
 cloud.google.com/go/trace/apiv2
 # contrib.go.opencensus.io/exporter/ocagent v0.6.0
+## explicit
 contrib.go.opencensus.io/exporter/ocagent
 # contrib.go.opencensus.io/exporter/prometheus v0.1.0
+## explicit
 contrib.go.opencensus.io/exporter/prometheus
 # contrib.go.opencensus.io/exporter/stackdriver v0.13.0
+## explicit
 contrib.go.opencensus.io/exporter/stackdriver
 contrib.go.opencensus.io/exporter/stackdriver/monitoredresource
 # github.com/aws/aws-sdk-go v1.27.1
@@ -56,8 +59,10 @@ github.com/census-instrumentation/opencensus-proto/gen-go/trace/v1
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/evanphx/json-patch v4.5.0+incompatible
+## explicit
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.7.0
+## explicit
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
@@ -89,6 +94,7 @@ github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-containerregistry v0.0.0-20200227193449-ba53fa10e72c
+## explicit
 github.com/google/go-containerregistry/pkg/name
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
@@ -119,6 +125,7 @@ github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/imdario/mergo v0.3.8
+## explicit
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
@@ -129,6 +136,7 @@ github.com/json-iterator/go
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
+## explicit
 github.com/mattbaird/jsonpatch
 # github.com/mattn/go-colorable v0.0.9
 github.com/mattn/go-colorable
@@ -137,6 +145,7 @@ github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mitchellh/go-homedir v1.1.0
+## explicit
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
@@ -144,6 +153,8 @@ github.com/mitchellh/mapstructure
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
+# github.com/openzipkin/zipkin-go v0.2.2
+## explicit
 # github.com/pelletier/go-toml v1.2.0
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
@@ -167,12 +178,14 @@ github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
 # github.com/spf13/cobra v0.0.6
+## explicit
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.0.0
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/spf13/viper v1.6.2
+## explicit
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
@@ -325,12 +338,14 @@ gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2
 # gotest.tools v2.2.0+incompatible
+## explicit
 gotest.tools/assert
 gotest.tools/assert/cmp
 gotest.tools/internal/difflib
 gotest.tools/internal/format
 gotest.tools/internal/source
 # k8s.io/api v0.17.0
+## explicit
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -372,6 +387,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.17.0
+## explicit
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -419,6 +435,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/client-go v0.17.0
+## explicit
 k8s.io/client-go/discovery
 k8s.io/client-go/dynamic
 k8s.io/client-go/informers
@@ -592,6 +609,7 @@ k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
 # knative.dev/pkg v0.0.0-20200206191432-9072f494c940
+## explicit
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
 knative.dev/pkg/apis/duck/v1
@@ -612,6 +630,7 @@ knative.dev/pkg/profiling
 knative.dev/pkg/ptr
 knative.dev/pkg/tracker
 # knative.dev/serving v0.12.1-0.20200206201132-525b15d87dc1
+## explicit
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
 knative.dev/serving/pkg/apis/config
