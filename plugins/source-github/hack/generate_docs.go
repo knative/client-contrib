@@ -19,7 +19,7 @@ import (
 	"os"
 
 	"github.com/maximilien/kn-source-github/pkg/factories"
-	
+
 	"github.com/maximilien/kn-source-pkg/pkg/core"
 	"github.com/maximilien/kn-source-pkg/pkg/util"
 )

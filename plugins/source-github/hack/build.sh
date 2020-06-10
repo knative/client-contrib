@@ -243,7 +243,7 @@ generate_fakes() {
   echo "🎭 Fakes (pkg/types)"
   mkdir -p ./pkg/types/typesfakes
   genfakes=false
-  for f in ./pkg/types/*.go 
+  for f in ./pkg/types/*.go
   do
     if [ "$f" -nt ./pkg/types/typesfakes ]; then
       echo "Found newer file: $f, generating new fakes"
@@ -255,7 +255,7 @@ generate_fakes() {
     mkdir -p "./pkg/types/typesfakes"
     go generate ./pkg/types/...
   fi
-  
+
   echo "🎭 Fakes (3rd parties)"
   mkdir -p "./pkg/fakes"
 
@@ -263,7 +263,7 @@ generate_fakes() {
   TYPES=( SourcesV1alpha1Interface GitHubSourcesGetter GitHubSourceInterface )
   FILES=( ./vendor/knative.dev/eventing-contrib/github/pkg/client/clientset/versioned/typed/sources )
   CFILES=( fake_sources_v1alpha1interface.go fake_sources_githubsourcesgetter.go fake_sources_githubsourceinterface.go )
-  
+
   i=0
   for t in ${TYPES[@]}
   do

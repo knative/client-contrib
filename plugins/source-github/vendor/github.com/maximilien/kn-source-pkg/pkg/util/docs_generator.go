@@ -134,7 +134,7 @@ func getFooter() (string, error) {
 		return readFileContent(footerFilepath)
 	}
 	return `## More information
-	
+
 * [Knative Client](https://github.com/knative/client)
 * [How to contribute a plugin](https://github.com/knative/client-contrib#how-to-contribute-a-plugin)
 `, nil
