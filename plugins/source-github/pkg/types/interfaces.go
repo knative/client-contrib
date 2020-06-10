@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 package types
 
@@ -20,6 +22,8 @@ import (
 	v1alpha1 "knative.dev/eventing-contrib/github/pkg/apis/sources/v1alpha1"
 )
 
+// GHSourceClient the GitHub source client interface
+//counterfeiter:generate . GHSourceClient
 type GHSourceClient interface {
 	sourcetypes.KnSourceClient
 	GHSourceParams() *GHSourceParams
@@ -30,6 +34,8 @@ type GHSourceClient interface {
 	DeleteGHSource(name string) error
 }
 
+// GHSourceFactory the GitHub source factory interface
+//counterfeiter:generate . GHSourceFactory
 type GHSourceFactory interface {
 	sourcetypes.KnSourceFactory
 
@@ -40,18 +46,24 @@ type GHSourceFactory interface {
 	CreateGHSourceClient(namespace string) GHSourceClient
 }
 
+// GHCommandFactory the GitHub source command factory interface
+//counterfeiter:generate . GHCommandFactory
 type GHCommandFactory interface {
 	sourcetypes.CommandFactory
 
 	GHSourceFactory() GHSourceFactory
 }
 
+// GHFlagsFactory the GitHub source flags factory interface
+//counterfeiter:generate . GHFlagsFactory
 type GHFlagsFactory interface {
 	sourcetypes.FlagsFactory
 
 	GHSourceFactory() GHSourceFactory
 }
 
+// GHRunEFactory the GitHub source RunE factory interface
+//counterfeiter:generate . GHRunEFactory
 type GHRunEFactory interface {
 	sourcetypes.RunEFactory
 
