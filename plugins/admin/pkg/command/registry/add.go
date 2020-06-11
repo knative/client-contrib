@@ -35,24 +35,9 @@ type prcmdFlags struct {
 	Password   string
 }
 
-type Registry struct {
-	Auths Auths `json:"auths"`
-}
-type RegistryCred struct {
-	Username string `json:"Username"`
-	Password string `json:"Password"`
-	Email    string `json:"Email"`
-}
-
-type Auths map[string]RegistryCred
-
-//
-//type Info map[string]Person
-
 var prflags prcmdFlags
 
-// addCmd represents the add command
-
+// NewPrAddCommand represents the add command
 func NewPrAddCommand(p *pkg.AdminParams) *cobra.Command {
 	var prAddCmd = &cobra.Command{
 		Use:   "add",
@@ -81,7 +66,7 @@ kn admin registry add \
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dockerCfg := Registry{
 				Auths: Auths{
-					prflags.Server: RegistryCred{
+					prflags.Server: DockerCred{
 						Username: prflags.Username,
 						Password: prflags.Password,
 						Email:    prflags.Email,
@@ -92,7 +77,7 @@ kn admin registry add \
 			j, err := json.Marshal(dockerCfg)
 
 			secretData := map[string][]byte{
-				".dockerconfigjson": j,
+				DockerJSONName: j,
 			}
 
 			secret := &corev1.Secret{
@@ -104,6 +89,7 @@ kn admin registry add \
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: fmt.Sprintf("%s-", prflags.SecretName),
 					Namespace:    "default",
+					Labels:       AdminRegistryLabels,
 				},
 				Data: secretData,
 			}

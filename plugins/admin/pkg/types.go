@@ -24,12 +24,17 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// LabelManagedBy is a label name to indicate who is managing this resource
+var LabelManagedBy = "app.kubernetes.io/managed-by"
+
+// AdminParams stores the configs for interacting with kube api
 type AdminParams struct {
 	KubeCfgPath  string
 	ClientConfig clientcmd.ClientConfig
 	ClientSet    kubernetes.Interface
 }
 
+// Initialize generate the clientset for params
 func (params *AdminParams) Initialize() error {
 	if params.ClientSet == nil {
 		restConfig, err := params.RestConfig()
