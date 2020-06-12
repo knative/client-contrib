@@ -17,6 +17,7 @@ package autoscaling
 import (
 	"errors"
 	"fmt"
+
 	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"github.com/spf13/cobra"

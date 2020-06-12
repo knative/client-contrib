@@ -26,7 +26,7 @@ var (
 	DockerJSONName = ".dockerconfigjson"
 )
 
-// AdminRegistryLabels is a set of labels which will add to the registry resources to indicate
+// AdminRegistryLabels is a set of labels which will be added to the registry resources to indicate
 // that these resources are managed by admin registry command.
 var AdminRegistryLabels = map[string]string{
 	pkg.LabelManagedBy: AdminRegistryCmdName,
@@ -37,15 +37,15 @@ type Registry struct {
 	Auths Auths `json:"auths"`
 }
 
-// DockerCred contains actual credentials which are used to pull images
-type DockerCred struct {
+// registryCred contains actual credentials which are used to pull images
+type registryCred struct {
 	Username string `json:"Username"`
 	Password string `json:"Password"`
 	Email    string `json:"Email"`
 }
 
 // Auths is a map of docker credentials indexed by server url
-type Auths map[string]DockerCred
+type Auths map[string]registryCred
 
 // NewPrivateRegistryCmd represents the privateRegistry command
 func NewPrivateRegistryCmd(p *pkg.AdminParams) *cobra.Command {
@@ -62,8 +62,8 @@ kn admin registry add \
   --username=[REGISTRY_USER] \
   --password=[REGISTRY_PASSWORD]`,
 	}
-	privateRegistryCmd.AddCommand(NewPrAddCommand(p))
-	privateRegistryCmd.AddCommand(NewPrRmCommand(p))
+	privateRegistryCmd.AddCommand(NewRegistryAddCommand(p))
+	privateRegistryCmd.AddCommand(NewRegistryRmCommand(p))
 	privateRegistryCmd.InitDefaultHelpCmd()
 	return privateRegistryCmd
 }

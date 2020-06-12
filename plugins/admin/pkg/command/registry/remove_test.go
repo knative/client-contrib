@@ -30,14 +30,13 @@ import (
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 )
 
-func TestNewPrRmCommand(t *testing.T) {
-
+func TestNewRegistryRmCommand(t *testing.T) {
 	t.Run("incompleted args for registry remove", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
 		p := pkg.AdminParams{
 			ClientSet: client,
 		}
-		cmd := NewPrRmCommand(&p)
+		cmd := NewRegistryRmCommand(&p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
 		assert.ErrorContains(t, err, "requires the registry username")
@@ -51,7 +50,7 @@ func TestNewPrRmCommand(t *testing.T) {
 		p := pkg.AdminParams{
 			ClientSet: client,
 		}
-		cmd := NewPrRmCommand(&p)
+		cmd := NewRegistryRmCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "No registry found"), "unexpected output: %s", o)
@@ -72,7 +71,7 @@ func TestNewPrRmCommand(t *testing.T) {
 
 		dockerCfg := Registry{
 			Auths: Auths{
-				"docker.io": DockerCred{
+				"docker.io": registryCred{
 					Username: "user",
 					Password: "password",
 					Email:    "email",
@@ -100,7 +99,7 @@ func TestNewPrRmCommand(t *testing.T) {
 			ClientSet: client,
 		}
 
-		cmd := NewPrRmCommand(&p)
+		cmd := NewRegistryRmCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of ServiceAccount 'default/default' updated"), "unexpected output: %s", o)

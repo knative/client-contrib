@@ -21,6 +21,7 @@ import (
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -32,14 +33,14 @@ import (
 var username string
 var server string
 
-// NewPrRmCommand represents the remove command
-func NewPrRmCommand(p *pkg.AdminParams) *cobra.Command {
-	var prRmCmd = &cobra.Command{
+// NewRegistryRmCommand represents the remove command
+func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
+	var registryRmCmd = &cobra.Command{
 		Use:   "remove",
-		Short: "Remove registry with credentials",
-		Long: `Remove registry with credentials that used for Service deployment
-For example:
-
+		Short: "Remove registry settings",
+		Long:  `Remove registry settings by server and username to delete secret and update ServiceAccount`,
+		Example: `
+# remove registry settings
 kn admin registry remove \
   --username=[REGISTRY_USER] \
   --server=[REGISTRY_SERVER_URL]`,
@@ -82,7 +83,7 @@ kn admin registry remove \
 
 			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts("default").Get("default", metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get serviceaccount: %v", err)
+				return fmt.Errorf("failed to get ServiceAccount: %v", err)
 			}
 
 			desiredSa := defaultSa.DeepCopy()
@@ -98,7 +99,7 @@ kn admin registry remove \
 			desiredSa.ImagePullSecrets = imagePullSecrets
 			_, err = p.ClientSet.CoreV1().ServiceAccounts("default").Update(desiredSa)
 			if err != nil {
-				return fmt.Errorf("failed to remove registry secret in default serviceaccount: %v", err)
+				return fmt.Errorf("failed to remove registry secret in default ServiceAccount: %v", err)
 			}
 			cmd.Printf("ImagePullSecrets of ServiceAccount '%s/%s' updated\n", desiredSa.Namespace, desiredSa.Name)
 
@@ -122,12 +123,12 @@ kn admin registry remove \
 		},
 	}
 
-	prRmCmd.Flags().StringVar(&username, "username", "", "Registry Username")
-	prRmCmd.MarkFlagRequired("username")
-	prRmCmd.Flags().StringVar(&server, "server", "", "Registry Address")
-	prRmCmd.MarkFlagRequired("server")
-	prRmCmd.InitDefaultHelpFlag()
-	return prRmCmd
+	registryRmCmd.Flags().StringVar(&username, "username", "", "Registry Username")
+	registryRmCmd.MarkFlagRequired("username")
+	registryRmCmd.Flags().StringVar(&server, "server", "", "Registry Address")
+	registryRmCmd.MarkFlagRequired("server")
+	registryRmCmd.InitDefaultHelpFlag()
+	return registryRmCmd
 }
 
 func deleteSecrets(cmd *cobra.Command, clientset kubernetes.Interface, secretsMap map[string]*corev1.Secret, errCh chan<- error) {
@@ -138,7 +139,11 @@ func deleteSecrets(cmd *cobra.Command, clientset kubernetes.Interface, secretsMa
 			defer w.Done()
 			err := clientset.CoreV1().Secrets(secret.Namespace).Delete(secret.Name, &metav1.DeleteOptions{})
 			if err != nil {
-				errCh <- fmt.Errorf("failed to delete secret '%s': %v", secret.Name, err)
+				if apierrors.IsNotFound(err) {
+					cmd.Printf("Secret '%s/%s' not found, skipped\n", secret.Namespace, secret.Name)
+				} else {
+					errCh <- fmt.Errorf("failed to delete secret '%s/%s': %v", secret.Namespace, secret.Name, err)
+				}
 			} else {
 				cmd.Printf("Secret '%s/%s' deleted\n", secret.Namespace, secret.Name)
 			}
