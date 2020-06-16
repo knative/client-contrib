@@ -142,7 +142,7 @@ source_format() {
 
 go_build() {
   echo "🚧 Compile"
-  go build -ldflags "$(build_flags $(basedir))" -o $PLUGIN "./$MAIN_SOURCE_DIR/..."
+  go build -mod=mod -ldflags "$(build_flags $(basedir))" -o $PLUGIN "./$MAIN_SOURCE_DIR/..."
 }
 
 go_test() {
@@ -199,7 +199,6 @@ check_license() {
 update_deps() {
   echo "🚒 Update"
   go mod tidy
-  go mod vendor
 }
 
 watch() {
