@@ -139,7 +139,7 @@ generate_docs() {
 
 go_build() {
   echo "🚧 Compile"
-  go build -ldflags "$(build_flags $(basedir))" -o $PLUGIN ./cmd/...
+  go build -mod=mod -ldflags "$(build_flags $(basedir))" -o $PLUGIN ./cmd/...
 }
 
 go_test() {
@@ -196,7 +196,6 @@ check_license() {
 update_deps() {
   echo "🚒 Update"
   go mod tidy
-  go mod vendor
 }
 
 watch() {

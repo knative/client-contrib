@@ -130,7 +130,7 @@ source_format() {
 
 go_build() {
   echo "🚧 Compile"
-  go build -mod=vendor -ldflags "$(build_flags $(basedir))" -o kn-source_github ./cmd/...
+  go build -mod=mod -ldflags "$(build_flags $(basedir))" -o kn-source_github ./cmd/...
 }
 
 go_test() {
@@ -211,7 +211,6 @@ check_license() {
 update_deps() {
   echo "🚒 Update"
   go mod tidy
-  go mod vendor
 }
 
 generate_docs() {
