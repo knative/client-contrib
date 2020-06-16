@@ -18,12 +18,11 @@ import (
 	"errors"
 	"fmt"
 
-	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
-
 	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
@@ -31,7 +30,7 @@ import (
 )
 
 var (
-	scaleToZero       bool
+	ScaleToZero       bool
 	enableScaleToZero = "enable-scale-to-zero"
 	knativeServing    = "knative-serving"
 	configAutoscaler  = "config-autoscaler"
@@ -40,14 +39,15 @@ var (
 func NewAutoscalingUpdateCommand(p *pkg.AdminParams) *cobra.Command {
 	AutoscalingUpdateCommand := &cobra.Command{
 		Use:   "update",
-		Short: "Update autoscaling config",
-		Long:  `Update autoscaling config provided by Knative Pod Autoscaler (KPA)`,
-		Example: `
-  # To enable scale-to-zero
-  kn admin autoscaling update --scale-to-zero
+		Short: "update autoscaling config",
+		Long: `update autoscaling config provided by Knative Pod Autoscaler (KPA)
 
-  # To disable scale-to-zero
-  kn admin autoscaling update --no-scale-to-zero`,
+For example:
+# To enable scale-to-zero
+kn admin autoscaling update --scale-to-zero
+# To disable scale-to-zero
+kn admin autoscaling update --no-scale-to-zero
+`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
 				return errors.New("'autoscaling update' requires flag(s)")
@@ -55,32 +55,33 @@ func NewAutoscalingUpdateCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var desiredScaleToZero string
+			var scaleToZero string
 			if cmd.Flags().Changed("scale-to-zero") {
-				desiredScaleToZero = "true"
+				scaleToZero = "true"
 			} else if cmd.Flags().Changed("no-scale-to-zero") {
-				desiredScaleToZero = "false"
+				scaleToZero = "false"
 			}
-
 			currentCm := &corev1.ConfigMap{}
 			currentCm, err := p.ClientSet.CoreV1().ConfigMaps(knativeServing).Get(configAutoscaler, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get ConfigMaps: %+v", err)
+				return fmt.Errorf("Failed to get ConfigMaps: %+v", err)
 			}
 			desiredCm := currentCm.DeepCopy()
-			desiredCm.Data[enableScaleToZero] = desiredScaleToZero
-
-			err = utils.UpdateConfigMap(p.ClientSet, desiredCm)
-			if err != nil {
-				return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", configAutoscaler, knativeServing, err)
+			desiredCm.Data[enableScaleToZero] = scaleToZero
+			if !equality.Semantic.DeepEqual(desiredCm.Data[enableScaleToZero], currentCm.Data[enableScaleToZero]) {
+				_, err = p.ClientSet.CoreV1().ConfigMaps(knativeServing).Update(desiredCm)
+				if err != nil {
+					return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
+				}
+				cmd.Printf("Updated Knative autoscaling config %s: %s\n", enableScaleToZero, scaleToZero)
+			} else {
+				cmd.Printf("Knative autoscaling config %s: %s not changed\n", enableScaleToZero, currentCm.Data[enableScaleToZero])
 			}
-			cmd.Printf("Updated Knative autoscaling config %s: %s\n", enableScaleToZero, desiredScaleToZero)
-
 			return nil
 		},
 	}
 
-	flags.AddBothBoolFlagsUnhidden(AutoscalingUpdateCommand.Flags(), &scaleToZero, "scale-to-zero", "", true,
+	flags.AddBothBoolFlagsUnhidden(AutoscalingUpdateCommand.Flags(), &ScaleToZero, "scale-to-zero", "", true,
 		"Enable scale-to-zero if set.")
 
 	return AutoscalingUpdateCommand
