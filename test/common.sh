@@ -66,8 +66,7 @@ function knative_setup() {
 
 function cluster_setup() {
   header "Installing client"
-  go get knative.dev/client
-  go install knative.dev/client/cmd/kn
+  go get knative.dev/client/cmd/kn
 }
 
 # Environment variable which can be used my plugins
