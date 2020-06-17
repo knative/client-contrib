@@ -66,7 +66,13 @@ function knative_setup() {
 
 function cluster_setup() {
   header "Installing client"
-  go get knative.dev/client/cmd/kn
+  local kn_build=$(mktemp /tmp/kn-build.XXXXXX)
+  pushd "$kn_build"
+  git clone https://github.com/knative/client .
+  hack/build.sh
+  cp kn /usr/local/bin/kn
+  popd
+  rm -rf "$kn_build"
 }
 
 # Environment variable which can be used my plugins
