@@ -66,8 +66,19 @@ function knative_setup() {
 
 function cluster_setup() {
   header "Installing client"
-  go get knative.dev/client
-  go install knative.dev/client/cmd/kn
+  local kn_build=$(mktemp -d)
+  local failed=""
+  pushd "$kn_build"
+  git clone https://github.com/knative/client . || failed="Cannot clone kn githup repo"
+  hack/build.sh -f || failed="error while builing kn"
+  cp kn /usr/local/bin/kn || failed="can't copy kn to /usr/local/bin"
+  chmod a+x /usr/local/bin/kn || failed="can't chmod kn"
+  if [ -n "$failed" ]; then
+     echo "ERROR: $failed"
+     exit 1
+  fi
+  popd
+  rm -rf "$kn_build"
 }
 
 # Environment variable which can be used my plugins
