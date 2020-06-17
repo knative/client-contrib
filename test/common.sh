@@ -66,11 +66,17 @@ function knative_setup() {
 
 function cluster_setup() {
   header "Installing client"
-  local kn_build=$(mktemp /tmp/kn-build.XXXXXX)
+  local kn_build=$(mktemp -d /tmp/kn-build.XXXXXX)
+  local failed=""
   pushd "$kn_build"
-  git clone https://github.com/knative/client .
-  hack/build.sh
-  cp kn /usr/local/bin/kn
+  git clone https://github.com/knative/client . || failed="Cannot clone kn githup repo"
+  hack/build.sh || failed="error while builing kn"
+  cp kn /usr/local/bin/kn || failed="can't copy kn to /usr/local/bin"
+  chmod a+x /usr/local/bin/kn || failed="can't chmod kn"
+  if [ -n "$failed" ]; then
+     echo "ERROR: $failed"
+     exit 1
+  fi
   popd
   rm -rf "$kn_build"
 }
