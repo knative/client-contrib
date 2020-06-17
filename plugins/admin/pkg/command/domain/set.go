@@ -59,7 +59,10 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			desiredCm := currentCm.DeepCopy()
 			labels := "selector:\n"
 			for _, label := range selector {
-				k, v, _ := splitByEqualSign(label)
+				k, v, err := splitByEqualSign(label)
+				if err != nil {
+					return err
+				}
 				label = fmt.Sprintf("  %s: %s\n", k, v)
 				labels += label
 			}
@@ -94,7 +97,7 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 
 	domainSetCommand.Flags().StringVarP(&domain, "custom-domain", "d", "", "desired custom domain")
 	domainSetCommand.MarkFlagRequired("custom-domain")
-	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "domain selector")
+	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "domain selector. name=value; you may provide this flag any number of times to set multiple selectors.")
 	domainSetCommand.InitDefaultHelpFlag()
 
 	return domainSetCommand
@@ -103,7 +106,7 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 func splitByEqualSign(pair string) (string, string, error) {
 	parts := strings.Split(pair, "=")
 	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
-		return "", "", fmt.Errorf("expecting the value format in value1=value2, given %s", pair)
+		return "", "", fmt.Errorf("expecting the selector format is name=vlue, but given '%s'", pair)
 	}
 	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
 }

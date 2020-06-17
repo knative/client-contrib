@@ -46,6 +46,7 @@ kn admin domain set - to set Knative route domain
 kn admin registry add - to add registry with credentials
 kn admin autoscaling update - to manage autoscaling config
 `,
+		SilenceUsage: true,
 	}
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kn/plugins/admin.yaml)")
