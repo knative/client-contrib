@@ -52,7 +52,7 @@ func NewPrivateRegistryCmd(p *pkg.AdminParams) *cobra.Command {
 	var privateRegistryCmd = &cobra.Command{
 		Use:   "registry",
 		Short: "Manage registry",
-		Long: `Manage Service deployment from a registry with credentials
+		Long: `Manage Service deployment from a private registry
 For example:
 
 kn admin registry add \

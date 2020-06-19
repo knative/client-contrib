@@ -36,14 +36,15 @@ var server string
 // NewRegistryRmCommand represents the remove command
 func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 	var registryRmCmd = &cobra.Command{
-		Use:   "remove",
-		Short: "Remove registry settings",
-		Long:  `Remove registry settings by server and username to delete secret and update ServiceAccount`,
+		Use:     "remove",
+		Aliases: []string{"rm"},
+		Short:   "Remove registry settings",
+		Long:    `Remove registry settings by server and username to delete secret and update ServiceAccount`,
 		Example: `
-# remove registry settings
-kn admin registry remove \
-  --username=[REGISTRY_USER] \
-  --server=[REGISTRY_SERVER_URL]`,
+  # To remove registry settings
+  kn admin registry remove \
+    --username=[REGISTRY_USER] \
+    --server=[REGISTRY_SERVER_URL]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if username == "" {
 				return errors.New("'registry remove' requires the registry username provided with the --username option")
