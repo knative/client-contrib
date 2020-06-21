@@ -33,14 +33,14 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-func TestNewPrAddCommand(t *testing.T) {
+func TestNewRegistryAddCommand(t *testing.T) {
 
 	t.Run("incompleted args for registry add", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
 		p := pkg.AdminParams{
 			ClientSet: client,
 		}
-		cmd := NewPrAddCommand(&p)
+		cmd := NewRegistryAddCommand(&p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
 		assert.ErrorContains(t, err, "requires the registry username")
@@ -58,9 +58,9 @@ func TestNewPrAddCommand(t *testing.T) {
 			ClientSet: client,
 		}
 
-		cmd := NewPrAddCommand(&p)
+		cmd := NewRegistryAddCommand(&p)
 		_, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
-		assert.ErrorContains(t, err, "failed to get serviceaccount")
+		assert.ErrorContains(t, err, "failed to get ServiceAccount")
 	})
 
 	t.Run("adding registry secret success", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestNewPrAddCommand(t *testing.T) {
 			ClientSet: client,
 		}
 
-		cmd := NewPrAddCommand(&p)
+		cmd := NewRegistryAddCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry"), "unexpected output: %s", o)
@@ -129,7 +129,7 @@ func TestNewPrAddCommand(t *testing.T) {
 			ClientSet: client,
 		}
 
-		cmd := NewPrAddCommand(&p)
+		cmd := NewRegistryAddCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry"), "unexpected output: %s", o)

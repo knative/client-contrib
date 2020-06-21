@@ -69,7 +69,9 @@ Manage Service deployment from a private registry
 For example:
 
 kn admin registry add \
+  --secret-name=[SECRET_NAME]
   --server=[REGISTRY_SERVER_URL] \
+  --email=[REGISTRY_EMAIL] \
   --username=[REGISTRY_USER] \
   --password=[REGISTRY_PASSWORD]
 
@@ -77,15 +79,17 @@ Usage:
   kn admin registry [command]
 
 Available Commands:
-  add     Add a Service deployment from a registry
+  add         add registry with credentials
+  help        Help about any command
+  remove      Remove registry settings
 
 Flags:
-  -h, --help   help for private-registry
+  -h, --help   help for registry
 
 Global Flags:
       --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
 
-Use "admin registry [command] --help" for more information about a command.
+Use "kn admin registry [command] --help" for more information about a command.
 
 ----
 
@@ -149,6 +153,15 @@ $ kn admin registry add \
   --server=[REGISTRY_SERVER_URL] \
   --username=[REGISTRY_USER] \
   --password=[REGISTRY_PASSWORD]
+-----
+=====
+
+.Remove a private registry by server and username.
+=====
+-----
+$ kn admin registry remove \
+  --username=[REGISTRY_USER] \
+  --server=[REGISTRY_SERVER_URL]
 -----
 =====
 

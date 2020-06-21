@@ -19,12 +19,40 @@ import (
 	"knative.dev/client-contrib/plugins/admin/pkg"
 )
 
-// privateRegistryCmd represents the privateRegistry command
+var (
+	// AdminRegistryCmdName is used in the labels to mark the resource this command created
+	AdminRegistryCmdName = "kn-admin-registry"
+	// DockerJSONName is used to represent ".dockerconfigjson" in secret data
+	DockerJSONName = ".dockerconfigjson"
+)
+
+// AdminRegistryLabels is a set of labels which will be added to the registry resources to indicate
+// that these resources are managed by admin registry command.
+var AdminRegistryLabels = map[string]string{
+	pkg.LabelManagedBy: AdminRegistryCmdName,
+}
+
+// Registry contains data for secret creation
+type Registry struct {
+	Auths Auths `json:"auths"`
+}
+
+// registryCred contains actual credentials which are used to pull images
+type registryCred struct {
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+	Email    string `json:"Email"`
+}
+
+// Auths is a map of docker credentials indexed by server url
+type Auths map[string]registryCred
+
+// NewPrivateRegistryCmd represents the privateRegistry command
 func NewPrivateRegistryCmd(p *pkg.AdminParams) *cobra.Command {
 	var privateRegistryCmd = &cobra.Command{
 		Use:   "registry",
 		Short: "Manage registry",
-		Long: `Manage Service deployment from a registry with credentials
+		Long: `Manage Service deployment from a private registry
 For example:
 
 kn admin registry add \
@@ -34,7 +62,8 @@ kn admin registry add \
   --username=[REGISTRY_USER] \
   --password=[REGISTRY_PASSWORD]`,
 	}
-	privateRegistryCmd.AddCommand(NewPrAddCommand(p))
+	privateRegistryCmd.AddCommand(NewRegistryAddCommand(p))
+	privateRegistryCmd.AddCommand(NewRegistryRmCommand(p))
 	privateRegistryCmd.InitDefaultHelpCmd()
 	return privateRegistryCmd
 }
