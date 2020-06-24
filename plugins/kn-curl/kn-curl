@@ -23,7 +23,6 @@ Examples:
 
   # Curl service hello in namespace myns
   kn curl hello -n myns
-  kn curl hello --namespace myns
 
   Flags:
 	-n, --namespace string             Specify the namespace to operate in.
@@ -32,13 +31,13 @@ Examples:
 # Need at least the service name
 if [ -z "$1" ]; then
 	echo "$USAGE"
-	exit 1
+	exit 0
 fi
 
 # If -h or --help is first argument
-if [ "$1" == "-h" ] | [ "$1" == "--help" ]; then
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
   echo "$USAGE"
-  exit 1
+  exit 0
 fi
 
 # Flags
@@ -48,13 +47,31 @@ NS="default"
 
 # Parse arguments for -n or --namespace and namespace value
 if [ "$N" == "$2" ] | [ "$NAMESPACE" == "$2" ]; then
-	NS="$3"
+  NS="$3"
+fi
+
+# Get kubectl path
+KUBECTL=`which kubectl`
+if [ -z "$KUBECTL" ]; then
+  echo "$USAGE"
+  echo "kubectl must also be in your PATH"
+  exit 0
 fi
 
 # Get INGRESS assuming Istio
-KUBECTL=`which kubectl`
 INGRESS=$($KUBECTL get svc istio-ingressgateway --namespace istio-system | awk '{print $4}' | tail +2)
 
-# Perform curl of service
-set -x
-curl '-sS' '-H' 'Host: '"$1"'.'"$NS"'.example.com' 'http://'"$INGRESS"''
+# Check if the servcice's cluster-local is on
+CLUSTER_LOCAL=$($KUBECTL get ksvc $1 --namespace $NS -o=jsonpath='{@.metadata.labels.serving\.knative\.dev\/visibility}')
+
+# Get URL for the service
+URL=$($KUBECTL get ksvc $1  --namespace $NS --output=custom-columns=:.status.url)
+
+# Perform curl of service either with CLUSTER_LOCAL or URL
+if [ -z "$CLUSTER_LOCAL" ]; then
+  set -x
+  curl '-sS' $URL
+else
+  set -x
+  curl '-sS' '-H' 'Host: '"$1"'.'"$NS"'.'svc.cluster.local 'http://'"$INGRESS"''
+fi

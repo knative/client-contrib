@@ -10,12 +10,13 @@ This plugins makes it easy to curl a Knative service.
 
 ### Dependencies
 
-1. Get the latest [`kn`](https://github.com/knative/client) binary for your
+1. Get the latest [`kn`](https://github.com/knative/client/releases) binary for your
    platform.
-2. Make sure the `kn-curl` BASH file is located in your `~/.config/kn/plugins`
+2. Make sure the `kn-curl` BASH file is in your plugins directory (default
+   `~/.config/kn/plugins`).
    directory. Of you are using a custom plugins repository, then add it there.
-3. Make sure the `kn-curl` BASH file has executable priviledges. You can achieve
-   this with `chmod +x kn-curl`
+3. Make sure the `kn-curl` BASH file has executable permissions. You can achieve
+   this with `chmod +x kn-curl`.
 
 ### Examples
 
