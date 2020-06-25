@@ -53,7 +53,7 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 		}
 		cmd := NewAutoscalingUpdateCommand(&p)
 		_, err := testutil.ExecuteCommand(cmd, "--scale-to-zero")
-		assert.ErrorContains(t, err, "Failed to get ConfigMaps", err)
+		assert.ErrorContains(t, err, "failed to get ConfigMaps", err)
 	})
 
 	t.Run("enable scale-to-zero successfully", func(t *testing.T) {

@@ -18,6 +18,8 @@ import (
 	"errors"
 	"fmt"
 
+	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
+
 	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"github.com/spf13/cobra"
@@ -29,13 +31,11 @@ import (
 func NewDomainUnSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainUnSetCommand := &cobra.Command{
 		Use:   "unset",
-		Short: "unset route domain",
-		Long: `unset Knative route domain for service
-
-For example:
-# To unset a route domain
-kn admin domain unset --custom-domain mydomain.com
-`,
+		Short: "Unset route domain",
+		Long:  `Unset Knative route domain for service`,
+		Example: `
+  # To unset a route domain
+  kn admin domain unset --custom-domain mydomain.com`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if domain == "" {
 				return errors.New("'domain unset' requires the route name to run provided with the --custom-domain option")
@@ -44,7 +44,7 @@ kn admin domain unset --custom-domain mydomain.com
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currentCm := &corev1.ConfigMap{}
-			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+			currentCm, err := p.ClientSet.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get configmaps: %+v", err)
 			}
@@ -58,10 +58,11 @@ kn admin domain unset --custom-domain mydomain.com
 				return fmt.Errorf("Knative route domain %s not found\n", domain)
 			}
 
-			_, err = p.ClientSet.CoreV1().ConfigMaps("knative-serving").Update(desiredCm)
+			err = utils.UpdateConfigMap(p.ClientSet, desiredCm)
 			if err != nil {
-				return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
+				return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", configDomain, knativeServing, err)
 			}
+
 			cmd.Printf("Unset Knative route domain %s\n", domain)
 			return nil
 		},

@@ -31,8 +31,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 	t.Run("incompleted args", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: make(map[string]string),
 		}
@@ -59,8 +59,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 	t.Run("route domain not found", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: map[string]string{
 				"dummy.domain": "",
@@ -79,8 +79,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 	t.Run("unset domain", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "config-domain",
-				Namespace: "knative-serving",
+				Name:      configDomain,
+				Namespace: knativeServing,
 			},
 			Data: map[string]string{
 				"dummy1.domain": "",
@@ -95,7 +95,7 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy1.domain")
 		assert.NilError(t, err)
 
-		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		cm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, len(cm.Data) == 1, "expected configmap lengh to be 1")
 
@@ -108,7 +108,7 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 		_, err = testutil.ExecuteCommand(cmd, "--custom-domain", "dummy2.domain")
 		assert.NilError(t, err)
 
-		cm, err = client.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+		cm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Check(t, len(cm.Data) == 0, "expected configmap lengh to be 0")
 	})

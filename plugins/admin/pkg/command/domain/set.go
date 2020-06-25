@@ -19,30 +19,34 @@ import (
 	"fmt"
 	"strings"
 
+	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
+
 	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var selector []string
-var domain string
+var (
+	selector       []string
+	domain         string
+	knativeServing = "knative-serving"
+	configDomain   = "config-domain"
+)
 
 // NewDomainSetCommand return the command to set knative custom domain
 func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainSetCommand := &cobra.Command{
 		Use:   "set",
-		Short: "set route domain",
-		Long: `Set Knative route domain for service
+		Short: "Set route domain",
+		Long:  `Set Knative route domain for service`,
+		Example: `
+  # To set a default route domain
+  kn admin domain set --custom-domain mydomain.com
 
-For example:
-# To set a default route domain
-kn admin domain set --custom-domain mydomain.com
-# To set a route domain for service having label app=v1
-kn admin domain set --custom-domain mydomain.com --selector app=v1
-`,
+  # To set a route domain for service having label app=v1
+  kn admin domain set --custom-domain mydomain.com --selector app=v1`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			domain = strings.TrimSpace(domain)
 			if domain == "" {
@@ -52,9 +56,9 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currentCm := &corev1.ConfigMap{}
-			currentCm, err := p.ClientSet.CoreV1().ConfigMaps("knative-serving").Get("config-domain", metav1.GetOptions{})
+			currentCm, err := p.ClientSet.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get configmaps: %+v", err)
+				return fmt.Errorf("failed to get ConfigMap %s in namespace %s: %+v", configDomain, knativeServing, err)
 			}
 			desiredCm := currentCm.DeepCopy()
 			labels := "selector:\n"
@@ -79,14 +83,16 @@ kn admin domain set --custom-domain mydomain.com --selector app=v1
 			}
 
 			desiredCm.Data[domain] = value
-			if !equality.Semantic.DeepEqual(desiredCm.Data, currentCm.Data) {
-				_, err = p.ClientSet.CoreV1().ConfigMaps("knative-serving").Update(desiredCm)
-				if err != nil {
-					return fmt.Errorf("Failed to update ConfigMaps: %+v", err)
-				}
-				cmd.Printf("Updated knative route domain to %q\n", domain)
+
+			err = utils.UpdateConfigMap(p.ClientSet, desiredCm)
+			if err != nil {
+				return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", configDomain, knativeServing, err)
+			}
+
+			if value == "" {
+				cmd.Printf("Set knative route domain %q\n", domain)
 			} else {
-				cmd.Printf("Knative route domain %q not changed\n", domain)
+				cmd.Printf("Set knative route domain %q with selector %+v\n", domain, selector)
 			}
 			return nil
 		},

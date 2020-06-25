@@ -124,7 +124,7 @@ Use "kn admin autoscaling [command] --help" for more information about a comman
 ====
 ----
 $ kn admin domain set --custom-domain mydomain.com
-Updated Knative route domain mydomain.com
+Set Knative route domain mydomain.com
 ----
 ====
 
@@ -132,7 +132,7 @@ Updated Knative route domain mydomain.com
 ====
 ----
 $ kn admin domain set --custom-domain test.com --selector app=v1
-Updated Knative route domain test.com
+Set Knative route domain test.com with selector [app=v1]
 ----
 ====
 
