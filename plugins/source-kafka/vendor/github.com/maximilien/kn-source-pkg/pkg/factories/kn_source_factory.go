@@ -17,22 +17,32 @@ package factories
 import (
 	"github.com/maximilien/kn-source-pkg/pkg/client"
 	"github.com/maximilien/kn-source-pkg/pkg/types"
+
+	"knative.dev/client/pkg/kn/commands/flags"
 )
 
 type DefautKnSourceFactory struct {
 	knSourceParams *types.KnSourceParams
+
+	knSourceClientFunc KnSourceClientFunc
 }
 
+type KnSourceClientFunc = func(knSourceParams *types.KnSourceParams, namespace string) types.KnSourceClient
+
 func NewDefaultKnSourceFactory() types.KnSourceFactory {
-	return &DefautKnSourceFactory{}
+	return &DefautKnSourceFactory{
+		knSourceClientFunc: client.NewKnSourceClient,
+	}
 }
 
 func (f *DefautKnSourceFactory) CreateKnSourceParams() *types.KnSourceParams {
-	f.knSourceParams = &types.KnSourceParams{}
+	f.knSourceParams = &types.KnSourceParams{
+		SinkFlag: flags.SinkFlags{},
+	}
 	f.knSourceParams.Initialize()
 	return f.knSourceParams
 }
 
 func (f *DefautKnSourceFactory) CreateKnSourceClient(namespace string) types.KnSourceClient {
-	return client.NewKnSourceClient(f.knSourceParams, namespace)
+	return f.knSourceClientFunc(f.knSourceParams, namespace)
 }

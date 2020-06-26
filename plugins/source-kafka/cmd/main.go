@@ -15,9 +15,27 @@
 package main
 
 import (
-	"github.com/maximilien/kn-source-pkg/pkg/factories"
+	"fmt"
+	"os"
+
+	"github.com/maximilien/kn-source-pkg/pkg/core"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"knative.dev/client-contrib/plugins/source-kafka/pkg/factories"
 )
 
 func main() {
-	factories.NewDefaultKnSourceFactory()
+	kafkaSourceFactory := factories.NewKafkaSourceFactory()
+
+	kafkaCommandFactory := factories.NewKafkaSourceCommandFactory(kafkaSourceFactory)
+	kafkaFlagsFactory := factories.NewKafkaSourceFlagsFactory(kafkaSourceFactory)
+	kafkaRunEFactory := factories.NewKafkaSourceRunEFactory(kafkaSourceFactory)
+
+	err := core.NewKnSourceCommand(kafkaSourceFactory, kafkaCommandFactory, kafkaFlagsFactory, kafkaRunEFactory).Execute()
+	if err != nil {
+		if err.Error() != "subcommand is required" {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(1)
+	}
 }

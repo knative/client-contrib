@@ -1,4 +1,4 @@
-// Copyright © 2019 The Knative Authors
+// Copyright © 2020 The Knative Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,19 +15,30 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/maximilien/kn-source-pkg/pkg/types"
+
+	"k8s.io/client-go/rest"
 )
 
 type knSourceClient struct {
 	knSourceParams *types.KnSourceParams
 	namespace      string
+	restConfig     *rest.Config
 }
 
 // NewKnSourceClient creates a new KnSourceClient with parameters and namespace
 func NewKnSourceClient(knSourceParams *types.KnSourceParams, namespace string) types.KnSourceClient {
+	restConfig, err := knSourceParams.RestConfig()
+	if err != nil {
+		panic(fmt.Sprintf("Could not create Kn source client, error: %s", err.Error()))
+	}
+
 	return &knSourceClient{
 		knSourceParams: knSourceParams,
 		namespace:      namespace,
+		restConfig:     restConfig,
 	}
 }
 
@@ -39,4 +50,9 @@ func (client *knSourceClient) KnSourceParams() *types.KnSourceParams {
 // Namespace returns the client's namespace
 func (client *knSourceClient) Namespace() string {
 	return client.namespace
+}
+
+// RestConfig a Config object to do REST invocations
+func (client *knSourceClient) RestConfig() *rest.Config {
+	return client.restConfig
 }

@@ -1,24 +1,24 @@
-## kn-source_kafka
+# kn-source-kafka
 
-`kn-source_kafka` is a plugin of Knative Client, which allows you to management
-of Kafka event source interactively from the command line.
+`kn-source-kafka` is a plugin of Knative Client, for management of Kafka event
+source interactively from the command line.
 
-### Description
+## Description
 
-`kn-source_kafka` is a plugin of Knative Client. You could create, update,
-describe and delete Kafka event sources in Knative Eventing. Go to
+`kn-source-kafka` is a plugin of Knative Client. You can create, describe and
+delete Kafka event sources. Go to
 [Knative Eventing document](https://knative.dev/docs/eventing/samples/kafka/source/)
 to understand more about Kafka event sources.
 
-### Build and Install
+## Build and Install
 
 You must
 [set up your development environment](https://github.com/knative/client/blob/master/docs/DEVELOPMENT.md#prerequisites)
-before you build `kn-source_kafka`.
+before you build `kn-source-kafka`.
 
 **Building:**
 
-Once you've set up your development environment, let's build `kn-source_kafka`.
+Once you've set up your development environment, let's build `kn-source-kafka`.
 Run below command under the directory of `client-contrib/plugins/source-kafka`.
 
 ```sh
@@ -27,50 +27,58 @@ $ hack/build.sh
 
 **Installing:**
 
-You will get an excuatable file `kn-source_kafka` under the directory of
+You will get an executable file `kn-source-kafka` under the directory of
 `client-contrib/plugins/source-kafka` after you run the build command. Then
 let's install it to become a Knative Client `kn` plugin.
 
-Install a plugin by simply copying the excuatable file `kn-source_kafka` to the
-folder of the `kn` plugins directory. You will be able to invoke it by
-`kn source_kafka`.
+Install the plugin by simply copying the executable file `kn-source-kafka` to
+the folder of the `kn` plugins directory. You will be able to invoke it by
+`kn source kafka`.
 
-### Usage
+## Usage
 
-```
-$ kn source_kafka
+### kafka
+
+Knative eventing Kafka source plugin
+
+#### Synopsis
+
 Manage your Knative Kafka eventing sources
 
-Usage:
-  kafka [command]
+#### Options
 
-Available Commands:
-  create      create NAME
-  delete      delete NAME
-  describe    describe NAME
-  help        Help about any command
-  update      update NAME
-
-Flags:
+```
   -h, --help   help for kafka
-
-Use "kafka [command] --help" for more information about a command.
 ```
 
-#### `kn source_kafka create`
+#### SEE ALSO
 
-```
-$ kn source_kafka create --help
+* [kafka create](#kafka-create)	 - create NAME
+* [kafka delete](#kafka-delete)	 - delete NAME
+* [kafka describe](#kafka-describe)	 - describe NAME
+
+### kafka create
+
 create NAME
 
-Usage:
-  kafka create NAME [flags]
+#### Synopsis
 
-Examples:
-#Creates a new Kafka source with mykafkasrc which subscribes a Kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the event messages to service 'event-display'
-kn source_kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display
+create NAME
 
-Flags:
+```
+kafka create NAME [flags]
+```
+
+#### Examples
+
+```
+#Creates a new Kafka source named as 'mykafkasrc' which subscribes a Kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the event messages to service 'event-display'
+kn source kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display
+```
+
+#### Options
+
+```
   -A, --all-namespaces         If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
       --consumergroup string   the consumer group ID
   -h, --help                   help for create
@@ -80,21 +88,74 @@ Flags:
       --topics string          Topics to consume messages from
 ```
 
-#### `kn source_kafka delete`
+#### SEE ALSO
 
-```
-$ kn source_kafka delete --help
+* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+
+### kafka delete
+
+delete NAME
+
+#### Synopsis
+
 delete a Kafka source
 
-Usage:
-  kafka delete NAME [flags]
+```
+kafka delete NAME [flags]
+```
 
-Examples:
+#### Examples
+
+```
 #Deletes a Kafka source with name 'mykafkasrc'
-kn source_kafka delete mykafkasrc
+kn source kafka delete mykafkasrc
+```
 
-Flags:
+#### Options
+
+```
   -A, --all-namespaces     If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
   -h, --help               help for delete
   -n, --namespace string   Specify the namespace to operate in.
 ```
+
+#### SEE ALSO
+
+* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+
+### kafka describe
+
+describe NAME
+
+#### Synopsis
+
+update a Kafka source
+
+```
+kafka describe NAME [flags]
+```
+
+#### Examples
+
+```
+#Describes a Kafka source with NAME
+kn source kafka describe kafka-name
+```
+
+#### Options
+
+```
+  -A, --all-namespaces     If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
+  -h, --help               help for describe
+  -n, --namespace string   Specify the namespace to operate in.
+```
+
+#### SEE ALSO
+
+* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+
+## More information
+	
+* [Knative Client](https://github.com/knative/client)
+* [How to contribute a plugin](https://github.com/knative/client-contrib#how-to-contribute-a-plugin)
+
