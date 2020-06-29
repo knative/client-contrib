@@ -19,9 +19,8 @@ import (
 	"fmt"
 	"strings"
 
-	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
-
 	"knative.dev/client-contrib/plugins/admin/pkg"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -45,7 +44,7 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
   # To set a default route domain
   kn admin domain set --custom-domain mydomain.com
 
-  # To set a route domain for service having label app=v1
+  # To set a route domain for service(s) having label 'app=v1'
   kn admin domain set --custom-domain mydomain.com --selector app=v1`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			domain = strings.TrimSpace(domain)
@@ -63,7 +62,11 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 			desiredCm := currentCm.DeepCopy()
 			labels := "selector:\n"
 			for _, label := range selector {
-				k, v, _ := splitByEqualSign(label)
+				k, v, err := splitByEqualSign(label)
+				if err != nil {
+					return err
+				}
+
 				label = fmt.Sprintf("  %s: %s\n", k, v)
 				labels += label
 			}
@@ -100,7 +103,7 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 
 	domainSetCommand.Flags().StringVarP(&domain, "custom-domain", "d", "", "desired custom domain")
 	domainSetCommand.MarkFlagRequired("custom-domain")
-	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "domain selector")
+	domainSetCommand.Flags().StringSliceVar(&selector, "selector", nil, "domain selector: name=value, you may provide this flag any number of times to set multiple selectors.")
 	domainSetCommand.InitDefaultHelpFlag()
 
 	return domainSetCommand
@@ -109,7 +112,7 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 func splitByEqualSign(pair string) (string, string, error) {
 	parts := strings.Split(pair, "=")
 	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
-		return "", "", fmt.Errorf("expecting the value format in value1=value2, given %s", pair)
+		return "", "", fmt.Errorf("expecting the selector format is 'name=vlue', but given '%s'", pair)
 	}
 	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
 }

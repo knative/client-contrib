@@ -31,7 +31,6 @@ import (
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
-
 func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	p := &pkg.AdminParams{}
 	p.Initialize()
@@ -39,13 +38,10 @@ func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "kn\u00A0admin",
 		Short: "A plugin of kn client to manage Knative",
-		Long: `kn admin: a plugin of kn client to manage Knative for administrators.
+		Long:  `kn admin: a plugin of kn client to manage Knative for administrators`,
 
-For example:
-kn admin domain set - to set Knative route domain
-kn admin registry add - to add registry with credentials
-kn admin autoscaling update - to manage autoscaling config
-`,
+		// disable printing usage when error occurs
+		SilenceUsage: true,
 	}
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kn/plugins/admin.yaml)")

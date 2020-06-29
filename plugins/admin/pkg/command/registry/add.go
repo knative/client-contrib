@@ -42,7 +42,7 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 	var registryAddCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add registry with credentials",
-		Long:  `Add registry with credentials to enable Service deployment from it`,
+		Long:  `Add registry with credentials to enable service deployment from it`,
 		Example: `
   # add registry with credentials
   kn admin registry add \

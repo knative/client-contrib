@@ -96,7 +96,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		v, ok := cm.Data["dummy.domain"]
 		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
-		assert.Equal(t, "", v, "value of key domain should beempty")
+		assert.Equal(t, "", v, "value of key domain should be empty")
 	})
 
 	t.Run("setting domain config with unchanged value", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 
 		v, ok := cm.Data["dummy.domain"]
 		assert.Check(t, ok, "domain key %q should exists", "dummy.domain")
-		assert.Equal(t, "", v, "value of key domain should beempty")
+		assert.Equal(t, "", v, "value of key domain should be empty")
 	})
 
 	t.Run("adding domain config with selector", func(t *testing.T) {
@@ -187,6 +187,26 @@ func TestNewDomainSetCommand(t *testing.T) {
 		v, ok = s.Selector["app"]
 		assert.Check(t, ok, "key %q should exist", "app")
 		assert.Equal(t, "dummy", v)
+	})
+
+	t.Run("adding domain config with invalid selector", func(t *testing.T) {
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      configDomain,
+				Namespace: knativeServing,
+			},
+			Data: map[string]string{
+				"foo.bar": "",
+			},
+		}
+		client := k8sfake.NewSimpleClientset(cm)
+		p := pkg.AdminParams{
+			ClientSet: client,
+		}
+		cmd := NewDomainSetCommand(&p)
+
+		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain", "--selector", "app")
+		assert.ErrorContains(t, err, "expecting the selector format is 'name=vlue', but given 'app'", err)
 	})
 }
 

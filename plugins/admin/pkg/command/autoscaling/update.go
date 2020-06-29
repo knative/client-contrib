@@ -45,6 +45,7 @@ func NewAutoscalingUpdateCommand(p *pkg.AdminParams) *cobra.Command {
 		Example: `
   # To enable scale-to-zero
   kn admin autoscaling update --scale-to-zero
+
   # To disable scale-to-zero
   kn admin autoscaling update --no-scale-to-zero`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
