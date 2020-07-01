@@ -28,23 +28,24 @@ import (
 )
 
 type kafkaSourceClient struct {
-	kafkaSourceParams *types.KafkaSourceParams
-	client            clientv1alpha1.SourcesV1alpha1Interface
 	namespace         string
+	kafkaSourceParams *types.KafkaSourceParams
 	knSourceClient    sourcetypes.KnSourceClient
+	client            clientv1alpha1.SourcesV1alpha1Interface
 }
 
 // NewKafkaSourceClient is to create a KafkaSourceClient
-func NewKafkaSourceClient(kafkaParams *types.KafkaSourceParams, c clientv1alpha1.SourcesV1alpha1Interface, ns string) types.KafkaSourceClient {
-	if c == nil {
-		c, _ = kafkaParams.NewSourcesClient()
+func NewKafkaSourceClient(kafkaParams *types.KafkaSourceParams, restConfig *rest.Config, ns string) (types.KafkaSourceClient, error) {
+	kafkaClient, err := kafkaParams.NewSourcesClient()
+	if err != nil {
+		return nil, knerrors.GetError(err)
 	}
 	return &kafkaSourceClient{
 		kafkaSourceParams: kafkaParams,
-		client:            c,
 		namespace:         ns,
-		knSourceClient:    sourceclient.NewKnSourceClient(kafkaParams.KnSourceParams, ns),
-	}
+		knSourceClient:    sourceclient.NewKnSourceClient(kafkaParams.KnSourceParams, restConfig, ns),
+		client:            kafkaClient,
+	}, nil
 }
 
 // RestConfig the REST cconfig

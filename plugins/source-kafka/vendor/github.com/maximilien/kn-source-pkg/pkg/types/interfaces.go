@@ -40,7 +40,7 @@ type KnSourceFactory interface {
 	KnSourceParams() *KnSourceParams
 
 	CreateKnSourceParams() *KnSourceParams
-	CreateKnSourceClient(namespace string) KnSourceClient
+	CreateKnSourceClient(restConfig *rest.Config, namespace string) KnSourceClient
 }
 
 // CommandFactory is the factory for cobra.Command objects
@@ -76,5 +76,5 @@ type RunEFactory interface {
 	DescribeRunE() RunE
 
 	KnSourceFactory() KnSourceFactory
-	KnSourceClient(namespace string) KnSourceClient
+	KnSourceClient(restConfig *rest.Config, namespace string) KnSourceClient
 }

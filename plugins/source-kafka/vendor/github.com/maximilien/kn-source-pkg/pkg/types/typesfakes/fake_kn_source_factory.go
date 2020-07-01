@@ -5,13 +5,15 @@ import (
 	"sync"
 
 	"github.com/maximilien/kn-source-pkg/pkg/types"
+	"k8s.io/client-go/rest"
 )
 
 type FakeKnSourceFactory struct {
-	CreateKnSourceClientStub        func(string) types.KnSourceClient
+	CreateKnSourceClientStub        func(*rest.Config, string) types.KnSourceClient
 	createKnSourceClientMutex       sync.RWMutex
 	createKnSourceClientArgsForCall []struct {
-		arg1 string
+		arg1 *rest.Config
+		arg2 string
 	}
 	createKnSourceClientReturns struct {
 		result1 types.KnSourceClient
@@ -43,16 +45,17 @@ type FakeKnSourceFactory struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeKnSourceFactory) CreateKnSourceClient(arg1 string) types.KnSourceClient {
+func (fake *FakeKnSourceFactory) CreateKnSourceClient(arg1 *rest.Config, arg2 string) types.KnSourceClient {
 	fake.createKnSourceClientMutex.Lock()
 	ret, specificReturn := fake.createKnSourceClientReturnsOnCall[len(fake.createKnSourceClientArgsForCall)]
 	fake.createKnSourceClientArgsForCall = append(fake.createKnSourceClientArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	fake.recordInvocation("CreateKnSourceClient", []interface{}{arg1})
+		arg1 *rest.Config
+		arg2 string
+	}{arg1, arg2})
+	fake.recordInvocation("CreateKnSourceClient", []interface{}{arg1, arg2})
 	fake.createKnSourceClientMutex.Unlock()
 	if fake.CreateKnSourceClientStub != nil {
-		return fake.CreateKnSourceClientStub(arg1)
+		return fake.CreateKnSourceClientStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -67,17 +70,17 @@ func (fake *FakeKnSourceFactory) CreateKnSourceClientCallCount() int {
 	return len(fake.createKnSourceClientArgsForCall)
 }
 
-func (fake *FakeKnSourceFactory) CreateKnSourceClientCalls(stub func(string) types.KnSourceClient) {
+func (fake *FakeKnSourceFactory) CreateKnSourceClientCalls(stub func(*rest.Config, string) types.KnSourceClient) {
 	fake.createKnSourceClientMutex.Lock()
 	defer fake.createKnSourceClientMutex.Unlock()
 	fake.CreateKnSourceClientStub = stub
 }
 
-func (fake *FakeKnSourceFactory) CreateKnSourceClientArgsForCall(i int) string {
+func (fake *FakeKnSourceFactory) CreateKnSourceClientArgsForCall(i int) (*rest.Config, string) {
 	fake.createKnSourceClientMutex.RLock()
 	defer fake.createKnSourceClientMutex.RUnlock()
 	argsForCall := fake.createKnSourceClientArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeKnSourceFactory) CreateKnSourceClientReturns(result1 types.KnSourceClient) {

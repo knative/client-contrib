@@ -25,7 +25,8 @@ import (
 )
 
 // NewFakeKafkaSourceClient is to create a fake KafkaSourceClient to test
-func NewFakeKafkaSourceClient(kafkaParams *types.KafkaSourceParams, ns string) types.KafkaSourceClient {
+func NewFakeKafkaSourceClient(ns string) types.KafkaSourceClient {
+	kafkaParams := NewFakeKafkaSourceParams()
 	knFakeSourceClient := &typesfakes.FakeKnSourceClient{}
 	knFakeSourceClient.KnSourceParamsReturns(kafkaParams.KnSourceParams)
 	knFakeSourceClient.NamespaceReturns(ns)

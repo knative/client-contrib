@@ -84,7 +84,7 @@ github.com/magiconair/properties
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/maximilien/kn-source-pkg v0.4.8-0.20200604003102-1caadf074019
+# github.com/maximilien/kn-source-pkg v0.4.10
 ## explicit
 github.com/maximilien/kn-source-pkg/pkg/client
 github.com/maximilien/kn-source-pkg/pkg/commands/source

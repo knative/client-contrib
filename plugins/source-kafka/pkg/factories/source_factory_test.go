@@ -18,22 +18,13 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+	"k8s.io/client-go/rest"
 )
 
 func TestNewKafkaSourceFactory(t *testing.T) {
 	factory := NewFakeKafkaSourceFactory("fake-namespace")
 
 	assert.Assert(t, factory != nil)
-}
-
-func TestKafkaCreateKnSourceParams(t *testing.T) {
-	factory := NewFakeKafkaSourceFactory("fake-namespace")
-
-	knSourceParams := factory.KnSourceParams()
-	assert.Assert(t, knSourceParams != nil)
-
-	knSourceParams = factory.CreateKnSourceParams()
-	assert.Equal(t, factory.KnSourceParams(), knSourceParams)
 }
 
 func TestCreateKafkaSourceParams(t *testing.T) {
@@ -46,10 +37,10 @@ func TestCreateKafkaSourceParams(t *testing.T) {
 
 func TestCreateKafkaSourceClient(t *testing.T) {
 	factory := NewFakeKafkaSourceFactory("fake-namespace")
-	client := factory.CreateKafkaSourceClient("fake-namespace")
+	client, _ := factory.CreateKafkaSourceClient(&rest.Config{}, "fake-namespace")
 
 	assert.Assert(t, client != nil)
 	assert.Equal(t, factory.KafkaSourceClient(), client)
-	assert.Equal(t, factory.CreateKnSourceClient("fake-namespace"), client)
+	assert.Equal(t, factory.CreateKnSourceClient(&rest.Config{}, "fake-namespace"), client)
 	assert.Equal(t, client.Namespace(), "fake-namespace")
 }

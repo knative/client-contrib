@@ -17,6 +17,7 @@ package factories
 import (
 	"github.com/maximilien/kn-source-pkg/pkg/client"
 	"github.com/maximilien/kn-source-pkg/pkg/types"
+	"k8s.io/client-go/rest"
 
 	"knative.dev/client/pkg/kn/commands/flags"
 )
@@ -27,7 +28,7 @@ type DefautKnSourceFactory struct {
 	knSourceClientFunc KnSourceClientFunc
 }
 
-type KnSourceClientFunc = func(knSourceParams *types.KnSourceParams, namespace string) types.KnSourceClient
+type KnSourceClientFunc = func(knSourceParams *types.KnSourceParams, restConfig *rest.Config, namespace string) types.KnSourceClient
 
 func NewDefaultKnSourceFactory() types.KnSourceFactory {
 	return &DefautKnSourceFactory{
@@ -43,6 +44,6 @@ func (f *DefautKnSourceFactory) CreateKnSourceParams() *types.KnSourceParams {
 	return f.knSourceParams
 }
 
-func (f *DefautKnSourceFactory) CreateKnSourceClient(namespace string) types.KnSourceClient {
-	return f.knSourceClientFunc(f.knSourceParams, namespace)
+func (f *DefautKnSourceFactory) CreateKnSourceClient(restConfig *rest.Config, namespace string) types.KnSourceClient {
+	return f.knSourceClientFunc(f.knSourceParams, restConfig, namespace)
 }
