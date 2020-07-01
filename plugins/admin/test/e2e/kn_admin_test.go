@@ -48,7 +48,7 @@ func newE2ETest(t *testing.T) *e2eTest {
 	return e2eTest
 }
 
-func TestSourceKafka(t *testing.T) {
+func TestKnAdminPlugin(t *testing.T) {
 	t.Parallel()
 
 	e2eTest := newE2ETest(t)
@@ -63,7 +63,7 @@ func TestSourceKafka(t *testing.T) {
 	err := e2eTest.it.KnPlugin().Install()
 	assert.NilError(t, err)
 
-	t.Log("test kn-source-kafka create source-name")
+	t.Log("test kn admin domain set")
 	e2eTest.knAdminSetDomain(t, r, "dummy.com")
 
 	err = e2eTest.it.KnPlugin().Uninstall()

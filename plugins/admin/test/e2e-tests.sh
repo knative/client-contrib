@@ -26,7 +26,7 @@ echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
 echo "Testing kn-admin plugin"
 cd ${REPO_ROOT_DIR}
 
-function plugin_test_setup(){
+function plugin_test_setup {
   # TODO: add setup steps
 }
 
