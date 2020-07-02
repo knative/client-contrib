@@ -112,7 +112,7 @@ func NewDomainSetCommand(p *pkg.AdminParams) *cobra.Command {
 func splitByEqualSign(pair string) (string, string, error) {
 	parts := strings.Split(pair, "=")
 	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
-		return "", "", fmt.Errorf("expecting the selector format is 'name=vlue', but given '%s'", pair)
+		return "", "", fmt.Errorf("expecting the selector format 'name=value', found '%s'", pair)
 	}
 	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
 }

@@ -206,7 +206,7 @@ func TestNewDomainSetCommand(t *testing.T) {
 		cmd := NewDomainSetCommand(&p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain", "--selector", "app")
-		assert.ErrorContains(t, err, "expecting the selector format is 'name=vlue', but given 'app'", err)
+		assert.ErrorContains(t, err, "expecting the selector format 'name=value', found 'app'", err)
 	})
 }
 
