@@ -46,7 +46,7 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 		Example: `
   # add registry with credentials
   kn admin registry add \
-    --secret-name=[SECRET_NAME]
+    --secret=[SECRET_NAME]
     --server=[REGISTRY_SERVER_URL] \
     --email=[REGISTRY_EMAIL] \
     --username=[REGISTRY_USER] \
@@ -117,7 +117,7 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 		},
 	}
 
-	registryAddCmd.Flags().StringVar(&registryFlags.SecretName, "secret-name", "secret-registry", "Registry Secret Name")
+	registryAddCmd.Flags().StringVar(&registryFlags.SecretName, "secret", "secret-registry", "Registry Secret Name")
 	registryAddCmd.Flags().StringVar(&registryFlags.Server, "server", "", "Registry Address")
 	registryAddCmd.MarkFlagRequired("server")
 	registryAddCmd.Flags().StringVar(&registryFlags.Email, "email", "user@default.email.com", "Registry Email")

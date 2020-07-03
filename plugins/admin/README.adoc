@@ -69,7 +69,7 @@ Manage Service deployment from a private registry
 For example:
 
 kn admin registry add \
-  --secret-name=[SECRET_NAME]
+  --secret=[SECRET_NAME]
   --server=[REGISTRY_SERVER_URL] \
   --email=[REGISTRY_EMAIL] \
   --username=[REGISTRY_USER] \
