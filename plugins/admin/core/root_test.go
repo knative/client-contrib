@@ -15,9 +15,12 @@
 package core
 
 import (
+	"strings"
 	"testing"
 
 	"gotest.tools/assert"
+
+	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
 
 func TestNewAdminCommand(t *testing.T) {
@@ -29,6 +32,7 @@ func TestNewAdminCommand(t *testing.T) {
 			"help",
 			"domain",
 			"registry",
+			"autoscaling",
 		}
 
 		cmd := NewAdminCommand()
@@ -41,4 +45,10 @@ func TestNewAdminCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("make sure usage has kn admin", func(t *testing.T) {
+		cmd := NewAdminCommand()
+		output, err := testutil.ExecuteCommand(cmd)
+		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(output, "Usage:\n  kn\u00a0admin [command]\n"), "invalid usage %q", output)
+	})
 }
