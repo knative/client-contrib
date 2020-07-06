@@ -18,9 +18,8 @@ import (
 	"errors"
 	"fmt"
 
-	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
-
 	"knative.dev/client-contrib/plugins/admin/pkg"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +31,7 @@ func NewDomainUnSetCommand(p *pkg.AdminParams) *cobra.Command {
 	domainUnSetCommand := &cobra.Command{
 		Use:   "unset",
 		Short: "Unset route domain",
-		Long:  `Unset Knative route domain for service`,
+		Long:  `Unset Knative route domain for service(s)`,
 		Example: `
   # To unset a route domain
   kn admin domain unset --custom-domain mydomain.com`,
