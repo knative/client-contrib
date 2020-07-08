@@ -46,24 +46,25 @@ func (f *kafkaSourceCommandFactory) KafkaSourceParams() *types.KafkaSourceParams
 func (f *kafkaSourceCommandFactory) SourceCommand() *cobra.Command {
 	sourceCmd := f.defaultCommandFactory.SourceCommand()
 	sourceCmd.Use = "kafka"
-	sourceCmd.Short = "Knative eventing Kafka source plugin"
-	sourceCmd.Long = "Manage your Knative Kafka eventing sources"
+	sourceCmd.Short = "Knative eventing kafka source plugin"
+	sourceCmd.Long = "Manage Knative kafka eventing sources"
 	return sourceCmd
 }
 
 func (f *kafkaSourceCommandFactory) CreateCommand() *cobra.Command {
 	createCmd := f.defaultCommandFactory.CreateCommand()
-	createCmd.Short = "create NAME"
-	createCmd.Example = `#Creates a new Kafka source named as 'mykafkasrc' which subscribes a Kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the event messages to service 'event-display'
+	createCmd.Use = "create NAME --servers SERVERS --topics TOPICS --consumergroup GROUP --sink SINK"
+	createCmd.Short = "Create a kafka source"
+	createCmd.Example = `# Create a new kafka source 'mykafkasrc' which subscribes a kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the events to service 'event-display'
 kn source kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display`
 	return createCmd
 }
 
 func (f *kafkaSourceCommandFactory) DeleteCommand() *cobra.Command {
 	deleteCmd := f.defaultCommandFactory.DeleteCommand()
-	deleteCmd.Short = "delete NAME"
-	deleteCmd.Long = "delete a Kafka source"
-	deleteCmd.Example = `#Deletes a Kafka source with name 'mykafkasrc'
+	deleteCmd.Use = "delete NAME"
+	deleteCmd.Short = "Delete a kafka source"
+	deleteCmd.Example = `# Delete a kafka source with name 'mykafkasrc'
 kn source kafka delete mykafkasrc`
 	return deleteCmd
 }
@@ -74,9 +75,9 @@ func (f *kafkaSourceCommandFactory) UpdateCommand() *cobra.Command {
 
 func (f *kafkaSourceCommandFactory) DescribeCommand() *cobra.Command {
 	describeCmd := f.defaultCommandFactory.DescribeCommand()
-	describeCmd.Short = "describe NAME"
-	describeCmd.Long = "update a Kafka source"
-	describeCmd.Example = `#Describes a Kafka source with NAME
+	describeCmd.Use = "describe NAME"
+	describeCmd.Short = "Describe a kafka source"
+	describeCmd.Example = `# Describe a kafka source with NAME
 kn source kafka describe kafka-name`
 	return describeCmd
 }

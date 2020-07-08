@@ -1,14 +1,14 @@
 # kn-source-kafka
 
-`kn-source-kafka` is a plugin of Knative Client, for management of Kafka event
+`kn-source-kafka` is a plugin of Knative Client, for management of kafka event
 source interactively from the command line.
 
 ## Description
 
 `kn-source-kafka` is a plugin of Knative Client. You can create, describe and
-delete Kafka event sources. Go to
+delete kafka event sources. Go to
 [Knative Eventing document](https://knative.dev/docs/eventing/samples/kafka/source/)
-to understand more about Kafka event sources.
+to understand more about kafka event sources.
 
 ## Build and Install
 
@@ -39,11 +39,11 @@ the folder of the `kn` plugins directory. You will be able to invoke it by
 
 ### kafka
 
-Knative eventing Kafka source plugin
+Knative eventing kafka source plugin
 
 #### Synopsis
 
-Manage your Knative Kafka eventing sources
+Manage Knative kafka eventing sources
 
 #### Options
 
@@ -53,26 +53,26 @@ Manage your Knative Kafka eventing sources
 
 #### SEE ALSO
 
-* [kafka create](#kafka-create)	 - create NAME
-* [kafka delete](#kafka-delete)	 - delete NAME
-* [kafka describe](#kafka-describe)	 - describe NAME
+* [kafka create](#kafka-create)	 - Create a kafka source
+* [kafka delete](#kafka-delete)	 - Delete a kafka source
+* [kafka describe](#kafka-describe)	 - Describe a kafka source
 
 ### kafka create
 
-create NAME
+Create a kafka source
 
 #### Synopsis
 
-create NAME
+Create a kafka source
 
 ```
-kafka create NAME [flags]
+kafka create NAME --servers SERVERS --topics TOPICS --consumergroup GROUP --sink SINK [flags]
 ```
 
 #### Examples
 
 ```
-#Creates a new Kafka source named as 'mykafkasrc' which subscribes a Kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the event messages to service 'event-display'
+# Create a new kafka source 'mykafkasrc' which subscribes a kafka server 'my-cluster-kafka-bootstrap.kafka.svc:9092' at topic 'test-topic' using the consumer group ID 'test-consumer-group' and sends the events to service 'event-display'
 kn source kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc:9092 --topics test-topic --consumergroup test-consumer-group --sink svc:event-display
 ```
 
@@ -90,15 +90,15 @@ kn source kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc
 
 #### SEE ALSO
 
-* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+* [kafka](#kafka)	 - Knative eventing kafka source plugin
 
 ### kafka delete
 
-delete NAME
+Delete a kafka source
 
 #### Synopsis
 
-delete a Kafka source
+Delete a kafka source
 
 ```
 kafka delete NAME [flags]
@@ -107,7 +107,7 @@ kafka delete NAME [flags]
 #### Examples
 
 ```
-#Deletes a Kafka source with name 'mykafkasrc'
+# Delete a kafka source with name 'mykafkasrc'
 kn source kafka delete mykafkasrc
 ```
 
@@ -121,15 +121,15 @@ kn source kafka delete mykafkasrc
 
 #### SEE ALSO
 
-* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+* [kafka](#kafka)	 - Knative eventing kafka source plugin
 
 ### kafka describe
 
-describe NAME
+Describe a kafka source
 
 #### Synopsis
 
-update a Kafka source
+Describe a kafka source
 
 ```
 kafka describe NAME [flags]
@@ -138,7 +138,7 @@ kafka describe NAME [flags]
 #### Examples
 
 ```
-#Describes a Kafka source with NAME
+# Describe a kafka source with NAME
 kn source kafka describe kafka-name
 ```
 
@@ -152,7 +152,7 @@ kn source kafka describe kafka-name
 
 #### SEE ALSO
 
-* [kafka](#kafka)	 - Knative eventing Kafka source plugin
+* [kafka](#kafka)	 - Knative eventing kafka source plugin
 
 ## More information
 	
