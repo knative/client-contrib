@@ -61,6 +61,14 @@ if [ $? -ne 0 ]; then
   exit 0
 fi
 
+# Check istio is setup as ingress
+ISTIO_POD=$($KUBECTL get pods -n knative-serving | grep networking-istio | awk '{print $1}')
+if [ $? -ne 0 ]; then
+  echo "$USAGE"
+  echo "Knative must also be installed with Istio for this version."
+  exit 0
+fi
+
 # Get INGRESS assuming Istio
 INGRESS=$($KUBECTL get svc istio-ingressgateway --namespace istio-system | awk '{print $4}' | tail +2)
 
