@@ -25,6 +25,7 @@ import (
 	sourcetypes "github.com/maximilien/kn-source-pkg/pkg/types"
 
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
 	"knative.dev/client/pkg/kn/commands"
 	"knative.dev/client/pkg/printers"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
@@ -50,21 +51,10 @@ func NewFakeKafkaSourceRunEFactory(ns string) types.KafkaSourceRunEFactory {
 	}
 }
 
-func (f *kafkaSourceRunEFactory) KnSourceParams() *sourcetypes.KnSourceParams {
-	return f.KafkaSourceFactory().KnSourceParams()
-}
-
-func (f *kafkaSourceRunEFactory) KnSourceClient(namespace string) sourcetypes.KnSourceClient {
-	return f.KafkaSourceFactory().KafkaSourceClient()
-}
-
-func (f *kafkaSourceRunEFactory) KafkaSourceClient(namespace string) types.KafkaSourceClient {
-	f.kafkaSourceClient = f.kafkaSourceFactory.CreateKafkaSourceClient(namespace)
-	return f.kafkaSourceClient
-}
-
-func (f *kafkaSourceRunEFactory) KnSourceFactory() sourcetypes.KnSourceFactory {
-	return f.kafkaSourceFactory
+func (f *kafkaSourceRunEFactory) KafkaSourceClient(restConfig *rest.Config, namespace string) (types.KafkaSourceClient, error) {
+	var err error
+	f.kafkaSourceClient, err = f.KafkaSourceFactory().CreateKafkaSourceClient(restConfig, namespace)
+	return f.kafkaSourceClient, err
 }
 
 func (f *kafkaSourceRunEFactory) KafkaSourceFactory() types.KafkaSourceFactory {
@@ -78,7 +68,16 @@ func (f *kafkaSourceRunEFactory) CreateRunE() sourcetypes.RunE {
 		if err != nil {
 			return err
 		}
-		f.kafkaSourceClient = f.KafkaSourceClient(namespace)
+
+		restConfig, err := f.KnSourceParams().KnParams.RestConfig()
+		if err != nil {
+			return err
+		}
+
+		f.kafkaSourceClient, err = f.KafkaSourceClient(restConfig, namespace)
+		if err != nil {
+			return err
+		}
 
 		if len(args) != 1 {
 			return errors.New("requires the name of the source to create as single argument")
@@ -125,7 +124,16 @@ func (f *kafkaSourceRunEFactory) DeleteRunE() sourcetypes.RunE {
 		if err != nil {
 			return err
 		}
-		f.kafkaSourceClient = f.KafkaSourceClient(namespace)
+
+		restConfig, err := f.KnSourceParams().KnParams.RestConfig()
+		if err != nil {
+			return err
+		}
+
+		f.kafkaSourceClient, err = f.KafkaSourceClient(restConfig, namespace)
+		if err != nil {
+			return err
+		}
 
 		if len(args) != 1 {
 			return errors.New("requires the name of the source to create as single argument")
@@ -162,7 +170,16 @@ func (f *kafkaSourceRunEFactory) DescribeRunE() sourcetypes.RunE {
 		if err != nil {
 			return err
 		}
-		f.kafkaSourceClient = f.KafkaSourceClient(namespace)
+
+		restConfig, err := f.KnSourceParams().KnParams.RestConfig()
+		if err != nil {
+			return err
+		}
+
+		f.kafkaSourceClient, err = f.KafkaSourceClient(restConfig, namespace)
+		if err != nil {
+			return err
+		}
 
 		if len(args) != 1 {
 			return errors.New("requires the name of the source to create as single argument")

@@ -35,14 +35,6 @@ func NewKafkaSourceFlagsFactory(kafkaFactory types.KafkaSourceFactory) types.Kaf
 	}
 }
 
-func (f *kafkaSourceFlagsFactory) KnSourceFactory() sourcetypes.KnSourceFactory {
-	return f.kafkaSourceFactory
-}
-
-func (f *kafkaSourceFlagsFactory) KnSourceParams() *sourcetypes.KnSourceParams {
-	return f.kafkaSourceFactory.KnSourceParams()
-}
-
 func (f *kafkaSourceFlagsFactory) KafkaSourceParams() *types.KafkaSourceParams {
 	return f.kafkaSourceFactory.KafkaSourceParams()
 }

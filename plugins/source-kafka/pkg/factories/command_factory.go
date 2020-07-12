@@ -35,20 +35,12 @@ func NewKafkaSourceCommandFactory(kafkaFactory types.KafkaSourceFactory) types.K
 	}
 }
 
-func (f *kafkaSourceCommandFactory) KnSourceFactory() sourcetypes.KnSourceFactory {
-	return f.kafkaSourceFactory
-}
-
 func (f *kafkaSourceCommandFactory) KafkaSourceFactory() types.KafkaSourceFactory {
 	return f.kafkaSourceFactory
 }
 
 func (f *kafkaSourceCommandFactory) KafkaSourceParams() *types.KafkaSourceParams {
 	return f.kafkaSourceFactory.KafkaSourceParams()
-}
-
-func (f *kafkaSourceCommandFactory) KnSourceParams() *sourcetypes.KnSourceParams {
-	return f.kafkaSourceFactory.KnSourceParams()
 }
 
 func (f *kafkaSourceCommandFactory) SourceCommand() *cobra.Command {

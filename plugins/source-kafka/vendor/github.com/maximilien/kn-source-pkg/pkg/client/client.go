@@ -15,8 +15,6 @@
 package client
 
 import (
-	"fmt"
-
 	"github.com/maximilien/kn-source-pkg/pkg/types"
 
 	"k8s.io/client-go/rest"
@@ -29,12 +27,7 @@ type knSourceClient struct {
 }
 
 // NewKnSourceClient creates a new KnSourceClient with parameters and namespace
-func NewKnSourceClient(knSourceParams *types.KnSourceParams, namespace string) types.KnSourceClient {
-	restConfig, err := knSourceParams.RestConfig()
-	if err != nil {
-		panic(fmt.Sprintf("Could not create Kn source client, error: %s", err.Error()))
-	}
-
+func NewKnSourceClient(knSourceParams *types.KnSourceParams, restConfig *rest.Config, namespace string) types.KnSourceClient {
 	return &knSourceClient{
 		knSourceParams: knSourceParams,
 		namespace:      namespace,

@@ -24,14 +24,11 @@ import (
 
 func TestNewKafkaSourceFlagsFactory(t *testing.T) {
 	flagsFactory := createKafkaSourceFlagsFactory()
-
 	assert.Assert(t, flagsFactory != nil)
 }
 
-func TestFlagsFactory_KnSourceFactory(t *testing.T) {
+func TestFlagsFactory_KafkaSourceFactory(t *testing.T) {
 	flagsFactory := createKafkaSourceFlagsFactory()
-
-	assert.Assert(t, flagsFactory.KnSourceFactory() != nil)
 	assert.Equal(t, flagsFactory.KafkaSourceFactory(), flagsFactory.KafkaSourceFactory())
 }
 

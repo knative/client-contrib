@@ -18,32 +18,29 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+	"k8s.io/client-go/rest"
 )
 
 func TestNewKafkaSourceRunEFactory(t *testing.T) {
 	runEFactory := NewFakeKafkaSourceRunEFactory("fake_namespace")
-
 	assert.Assert(t, runEFactory != nil)
 }
 
 func TestRunEFactory_KafkaSourceParams(t *testing.T) {
 	runEFactory := NewFakeKafkaSourceRunEFactory("fake_namespace")
-
-	assert.Assert(t, runEFactory.KafkaSourceFactory().KnSourceParams() != nil)
 	assert.Assert(t, runEFactory.KafkaSourceFactory().KafkaSourceParams() != nil)
 }
 
 func TestRunEFactory_KafkaSourceFactory(t *testing.T) {
 	runEFactory := NewFakeKafkaSourceRunEFactory("fake_namespace")
-
-	assert.Assert(t, runEFactory.KnSourceFactory() != nil)
 	assert.Assert(t, runEFactory.KafkaSourceFactory() != nil)
 }
 
 func TestRunEFactory_KafkaSourceClient(t *testing.T) {
 	runEFactory := NewFakeKafkaSourceRunEFactory("fake_namespace")
-	knSourceClient := runEFactory.KafkaSourceClient("fake_namespace")
+	knSourceClient, err := runEFactory.KafkaSourceClient(&rest.Config{}, "fake_namespace")
 	assert.Assert(t, knSourceClient != nil)
+	assert.Assert(t, err == nil)
 }
 
 func TestCreateRunE(t *testing.T) {

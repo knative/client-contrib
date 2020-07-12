@@ -23,43 +23,31 @@ import (
 
 func TestNewKafkaSourceCommandFactory(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory != nil)
-}
-
-func TestCommand_KnSourceFactory(t *testing.T) {
-	commandFactory := createKafkaSourceCommandFactory()
-
-	assert.Assert(t, commandFactory.KnSourceFactory() != nil)
 }
 
 func TestSourceCommand(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory.SourceCommand() != nil)
 }
 
 func TestCreateCommand(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory.CreateCommand() != nil)
 }
 
 func TestDeleteCommand(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory.DeleteCommand() != nil)
 }
 
 func TestUpdateCommand(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory.UpdateCommand() == nil)
 }
 
 func TestDescribeCommand(t *testing.T) {
 	commandFactory := createKafkaSourceCommandFactory()
-
 	assert.Assert(t, commandFactory.DescribeCommand() != nil)
 }
 

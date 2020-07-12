@@ -22,29 +22,29 @@ import (
 )
 
 func TestKafkaSourceClient(t *testing.T) {
-	knSourceClient := NewFakeKafkaSourceClient(NewFakeKafkaSourceParams(), "fake-namespace")
+	knSourceClient := NewFakeKafkaSourceClient("fake-namespace")
 	assert.Assert(t, knSourceClient != nil)
 }
 
 func TestClient_KnSourceParams(t *testing.T) {
-	fakeKafkaParams := NewFakeKafkaSourceParams()
-	knSourceClient := NewFakeKafkaSourceClient(fakeKafkaParams, "fake-namespace")
+	knSourceClient := NewFakeKafkaSourceClient("fake-namespace")
+	fakeKafkaParams := knSourceClient.KafkaSourceParams()
 	assert.Equal(t, knSourceClient.KnSourceParams(), fakeKafkaParams.KnSourceParams)
 }
 
 func TestNamespace(t *testing.T) {
-	knSourceClient := NewFakeKafkaSourceClient(NewFakeKafkaSourceParams(), "fake-namespace")
+	knSourceClient := NewFakeKafkaSourceClient("fake-namespace")
 	assert.Equal(t, knSourceClient.Namespace(), "fake-namespace")
 }
 func TestCreateKafka(t *testing.T) {
-	cli := NewFakeKafkaSourceClient(NewFakeKafkaSourceParams(), "fake-namespace")
+	cli := NewFakeKafkaSourceClient("fake-namespace")
 	objNew := newKafkaSource("samplekafka")
 	err := cli.CreateKafkaSource(objNew)
 	assert.NilError(t, err)
 }
 
 func TestDeleteKafka(t *testing.T) {
-	cli := NewFakeKafkaSourceClient(NewFakeKafkaSourceParams(), "fake-namespace")
+	cli := NewFakeKafkaSourceClient("fake-namespace")
 	objNew := newKafkaSource("samplekafka")
 	err := cli.CreateKafkaSource(objNew)
 	assert.NilError(t, err)
