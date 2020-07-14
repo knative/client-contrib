@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build e2e
-// +build !eventing
-
 package e2e
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,8 +26,13 @@ import (
 	"knative.dev/client/lib/test"
 )
 
+const pluginName string = "admin"
+
 type e2eTest struct {
-	it *testcommon.E2ETest
+	it         *testcommon.E2ETest
+	kn         *test.Kn
+	kubectl    *test.Kubectl
+	backupData map[string]string
 }
 
 func newE2ETest(t *testing.T) *e2eTest {
@@ -42,8 +46,13 @@ func newE2ETest(t *testing.T) *e2eTest {
 		return nil
 	}
 
+	kn := test.NewKn()
+	kubectl := test.NewKubectl("knative-serving")
 	e2eTest := &e2eTest{
-		it: it,
+		it:         it,
+		kn:         &kn,
+		kubectl:    &kubectl,
+		backupData: make(map[string]string),
 	}
 	return e2eTest
 }
@@ -63,14 +72,55 @@ func TestKnAdminPlugin(t *testing.T) {
 	err := e2eTest.it.KnPlugin().Install()
 	assert.NilError(t, err)
 
-	t.Log("test kn admin domain set")
-	e2eTest.knAdminSetDomain(t, r, "dummy.com")
+	t.Log("test kn admin domain subcommand")
+	err = e2eTest.backupConfigMap("config-domain")
+	assert.NilError(t, err)
+	e2eTest.knAdminDomain(t, r)
+	err = e2eTest.restoreConfigMap("config-domain")
+	assert.NilError(t, err)
 
 	err = e2eTest.it.KnPlugin().Uninstall()
 	assert.NilError(t, err)
 }
 
-func (et *e2eTest) knAdminSetDomain(t *testing.T, r *test.KnRunResultCollector, domain string) {
-	out := et.it.KnPlugin().Run("domain", "set", "--custom-domain", domain)
+func (et *e2eTest) backupConfigMap(cm string) error {
+	data, err := et.kubectl.Run("get", "configmap", cm, "-oyaml")
+	if err != nil {
+		return err
+	}
+	et.backupData[cm] = data
+	return nil
+}
+
+func (et *e2eTest) restoreConfigMap(cm string) error {
+	var data string
+	var ok bool
+	if data, ok = et.backupData[cm]; !ok {
+		return fmt.Errorf("backup for configmap %s does not exists", cm)
+	}
+	f, err := ioutil.TempFile("", "")
+	defer os.Remove(f.Name())
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(data)
+	if err != nil {
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+	_, err = et.kubectl.Run("replace", "-f", f.Name(), "--force")
+	return err
+}
+
+func (et *e2eTest) knAdminDomain(t *testing.T, r *test.KnRunResultCollector) {
+	domain := "dummy.domain.test"
+	out := et.kn.Run(pluginName, "domain", "set", "--custom-domain", domain)
+	r.AssertNoError(out)
+	out = et.kn.Run(pluginName, "domain", "set", "--custom-domain", domain, "--selector", "app=v1")
+	r.AssertNoError(out)
+	out = et.kn.Run(pluginName, "domain", "unset", "--custom-domain", domain)
 	r.AssertNoError(out)
 }
