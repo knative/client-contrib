@@ -26,11 +26,12 @@ echo "TEST_INFRA_SCRIPTS: $TEST_INFRA_SCRIPTS"
 echo "Testing kn-admin plugin"
 cd ${REPO_ROOT_DIR}
 
-function plugin_test_setup {
+function plugin_test_setup() {
+  header "Setting up plugin kn-admin"
   # TODO: add setup steps
 }
 
-run() {
+function run() {
 
   header "Running plugin kn-admin e2e tests for Knative Serving $KNATIVE_SERVING_VERSION and Eventing $KNATIVE_EVENTING_VERSION"
 
