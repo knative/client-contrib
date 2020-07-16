@@ -50,7 +50,8 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
     --server=[REGISTRY_SERVER_URL] \
     --email=[REGISTRY_EMAIL] \
     --username=[REGISTRY_USER] \
-    --password=[REGISTRY_PASSWORD]`,
+    --password=[REGISTRY_PASSWORD] \
+    -n [NAMESPACE]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if registryFlags.Username == "" {
 				return errors.New("'registry add' requires the registry username to run provided with the --username option")
@@ -64,6 +65,10 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if p.Namespace == "" {
+				cmd.Print("No namespace specified, using default namespace\n")
+				p.Namespace = "default"
+			}
 			dockerCfg := Registry{
 				Auths: Auths{
 					registryFlags.Server: registryCred{
@@ -88,18 +93,18 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 				Type: corev1.SecretTypeDockerConfigJson,
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: fmt.Sprintf("%s-", registryFlags.SecretName),
-					Namespace:    "default",
+					Namespace:    p.Namespace,
 					Labels:       AdminRegistryLabels,
 				},
 				Data: secretData,
 			}
 
-			secret, err = p.ClientSet.CoreV1().Secrets("default").Create(secret)
+			secret, err = p.ClientSet.CoreV1().Secrets(p.Namespace).Create(secret)
 			if err != nil {
 				return fmt.Errorf("failed to create secret: %v", err)
 			}
 
-			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts("default").Get("default", metav1.GetOptions{})
+			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Get("default", metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get ServiceAccount: %v", err)
 			}
@@ -108,11 +113,11 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 				Name: secret.Name,
 			})
 
-			_, err = p.ClientSet.CoreV1().ServiceAccounts("default").Update(desiredSa)
+			_, err = p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Update(desiredSa)
 			if err != nil {
 				return fmt.Errorf("failed to add registry secret in default ServiceAccount: %v", err)
 			}
-			cmd.Printf("Private registry %s added for default ServiceAccount\n", registryFlags.Server)
+			cmd.Printf("Private registry %s added for default ServiceAccount in %s namespace\n", registryFlags.Server, p.Namespace)
 			return nil
 		},
 	}

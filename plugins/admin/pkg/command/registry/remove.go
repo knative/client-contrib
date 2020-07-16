@@ -44,7 +44,8 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
   # To remove registry settings
   kn admin registry remove \
     --username=[REGISTRY_USER] \
-    --server=[REGISTRY_SERVER_URL]`,
+    --server=[REGISTRY_SERVER_URL] \
+    -n [NAMESPACE]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if username == "" {
 				return errors.New("'registry remove' requires the registry username provided with the --username option")
@@ -55,8 +56,12 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if p.Namespace == "" {
+				cmd.Print("No namespace specified, using default namespace\n")
+				p.Namespace = "default"
+			}
 			// get all credential secrets which have the label managed-by=kn-admin-registry
-			secrets, err := p.ClientSet.CoreV1().Secrets("default").List(metav1.ListOptions{
+			secrets, err := p.ClientSet.CoreV1().Secrets(p.Namespace).List(metav1.ListOptions{
 				LabelSelector: labels.SelectorFromSet(AdminRegistryLabels).String(),
 			})
 			if err != nil {
@@ -82,7 +87,7 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 				return nil
 			}
 
-			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts("default").Get("default", metav1.GetOptions{})
+			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Get("default", metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get ServiceAccount: %v", err)
 			}
@@ -98,7 +103,7 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 			}
 
 			desiredSa.ImagePullSecrets = imagePullSecrets
-			_, err = p.ClientSet.CoreV1().ServiceAccounts("default").Update(desiredSa)
+			_, err = p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Update(desiredSa)
 			if err != nil {
 				return fmt.Errorf("failed to remove registry secret in default ServiceAccount: %v", err)
 			}

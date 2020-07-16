@@ -56,7 +56,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 		assert.Check(t, strings.Contains(o, "No registry found"), "unexpected output: %s", o)
 	})
 
-	t.Run("registry removed successfully", func(t *testing.T) {
+	t.Run("registry removed successfully in default namespace", func(t *testing.T) {
 		sa := corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "default",
@@ -102,6 +102,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 		cmd := NewRegistryRmCommand(&p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(o, "No namespace specified, using default namespace"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of ServiceAccount 'default/default' updated"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "Secret 'default/dummy-secret' deleted"), "unexpected output: %s", o)
 
@@ -117,7 +118,76 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			}
 		}
 		assert.Check(t, !isContain, "ImagePullSecrets in the updated ServiceAccount should not contain the removed secret")
+	})
 
+	t.Run("registry removed successfully in custom namespace", func(t *testing.T) {
+		ns := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "custom-namespace",
+			},
+		}
+		sa := corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "default",
+				Namespace: "custom-namespace",
+			},
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				{
+					Name: "dummy-secret",
+				},
+			},
+		}
+
+		dockerCfg := Registry{
+			Auths: Auths{
+				"docker.io": registryCred{
+					Username: "user",
+					Password: "password",
+					Email:    "email",
+				},
+			},
+		}
+
+		j, err := json.Marshal(dockerCfg)
+		assert.NilError(t, err)
+
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dummy-secret",
+				Namespace: "custom-namespace",
+				Labels: map[string]string{
+					pkg.LabelManagedBy: AdminRegistryCmdName,
+				},
+			},
+			Data: map[string][]byte{
+				".dockerconfigjson": j,
+			},
+		}
+		client := k8sfake.NewSimpleClientset(&ns, &sa, &secret)
+		p := pkg.AdminParams{
+			ClientSet: client,
+			Namespace: "custom-namespace",
+		}
+
+		cmd := NewRegistryRmCommand(&p)
+		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
+		assert.NilError(t, err)
+		assert.Check(t, !strings.Contains(o, "No namespace specified, using default namespace"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "ImagePullSecrets of ServiceAccount 'custom-namespace/default' updated"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "Secret 'custom-namespace/dummy-secret' deleted"), "unexpected output: %s", o)
+
+		_, err = client.CoreV1().Secrets(ns.Name).Get("dummy-secret", metav1.GetOptions{})
+		assert.ErrorContains(t, err, "not found")
+		saUpdated, err := client.CoreV1().ServiceAccounts(ns.Name).Get("default", metav1.GetOptions{})
+		assert.NilError(t, err)
+		isContain := false
+		for _, imagePullSecret := range saUpdated.ImagePullSecrets {
+			if imagePullSecret.Name == "dummy-secret" {
+				isContain = true
+				break
+			}
+		}
+		assert.Check(t, !isContain, "ImagePullSecrets in the updated ServiceAccount should not contain the removed secret")
 	})
 
 }

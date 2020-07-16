@@ -63,7 +63,7 @@ func TestNewRegistryAddCommand(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to get ServiceAccount")
 	})
 
-	t.Run("adding registry secret success", func(t *testing.T) {
+	t.Run("adding registry secret success in default namespace", func(t *testing.T) {
 		sa := corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "default",
@@ -81,6 +81,7 @@ func TestNewRegistryAddCommand(t *testing.T) {
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "No namespace specified, using default namespace"), "unexpected output: %s", o)
 
 		secrets, err := client.CoreV1().Secrets(sa.Namespace).List(metav1.ListOptions{})
 		assert.NilError(t, err)
@@ -91,6 +92,59 @@ func TestNewRegistryAddCommand(t *testing.T) {
 		assert.Equal(t, "secret-registry-", secret.GenerateName)
 
 		saUpdated, err := client.CoreV1().ServiceAccounts(sa.Namespace).Get(sa.Name, metav1.GetOptions{})
+		assert.NilError(t, err)
+		assert.Equal(t, 1, len(saUpdated.ImagePullSecrets))
+		assert.Equal(t, secret.Name, saUpdated.ImagePullSecrets[0].Name)
+
+		data, ok := secret.Data[".dockerconfigjson"]
+		assert.Check(t, ok)
+
+		var r Registry
+		err = json.Unmarshal(data, &r)
+		assert.NilError(t, err)
+
+		rc, ok := r.Auths["docker.io"]
+		assert.Check(t, ok)
+		assert.Equal(t, "user", rc.Username)
+		assert.Equal(t, "dummy", rc.Password)
+		assert.Equal(t, "user@default.email.com", rc.Email)
+	})
+
+	t.Run("adding registry secret success in custom namespace", func(t *testing.T) {
+		ns := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "custom-namespace",
+			},
+		}
+		sa := corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "default",
+				Namespace: "custom-namespace",
+			},
+		}
+		client := k8sfake.NewSimpleClientset(&ns, &sa)
+		client.PrependReactor("create", "secrets", generateNameReactor)
+
+		p := pkg.AdminParams{
+			ClientSet: client,
+			Namespace: "custom-namespace",
+		}
+
+		cmd := NewRegistryAddCommand(&p)
+		o, err := testutil.ExecuteCommand(cmd, "add", "--username", "user", "--password", "dummy", "--server", "docker.io")
+		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(o, "Private registry"), "unexpected output: %s", o)
+		assert.Check(t, !strings.Contains(o, "No namespace specified, using default namespace"), "unexpected output: %s", o)
+
+		secrets, err := client.CoreV1().Secrets(ns.Name).List(metav1.ListOptions{})
+		assert.NilError(t, err)
+		assert.Equal(t, 1, len(secrets.Items), "got secrets: %#v", secrets)
+
+		secret := secrets.Items[0]
+		assert.Equal(t, corev1.SecretTypeDockerConfigJson, secret.Type)
+		assert.Equal(t, "secret-registry-", secret.GenerateName)
+
+		saUpdated, err := client.CoreV1().ServiceAccounts(ns.Name).Get(sa.Name, metav1.GetOptions{})
 		assert.NilError(t, err)
 		assert.Equal(t, 1, len(saUpdated.ImagePullSecrets))
 		assert.Equal(t, secret.Name, saUpdated.ImagePullSecrets[0].Name)

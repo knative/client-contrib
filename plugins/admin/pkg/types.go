@@ -32,6 +32,7 @@ type AdminParams struct {
 	KubeCfgPath  string
 	ClientConfig clientcmd.ClientConfig
 	ClientSet    kubernetes.Interface
+	Namespace    string
 }
 
 // Initialize generate the clientset for params

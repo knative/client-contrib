@@ -54,6 +54,7 @@ func NewPrivateRegistryCmd(p *pkg.AdminParams) *cobra.Command {
 		Short: "Manage registry",
 		Long:  `Manage registry used by Knative service deployment`,
 	}
+	privateRegistryCmd.PersistentFlags().StringVarP(&p.Namespace, "namespace", "n", "", "Namespace")
 	privateRegistryCmd.AddCommand(NewRegistryAddCommand(p))
 	privateRegistryCmd.AddCommand(NewRegistryRmCommand(p))
 	privateRegistryCmd.InitDefaultHelpCmd()

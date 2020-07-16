@@ -67,7 +67,11 @@ github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
+<<<<<<< HEAD
 # github.com/spf13/cobra v0.0.6
+=======
+# github.com/spf13/cobra v0.0.5
+>>>>>>> Add namespace flag on kn admin registry
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.0.0
@@ -334,7 +338,10 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/utils/integer
 # knative.dev/client v0.14.0
 ## explicit
+<<<<<<< HEAD
 knative.dev/client/lib/test
+=======
+>>>>>>> Add namespace flag on kn admin registry
 knative.dev/client/pkg/kn/flags
 # sigs.k8s.io/yaml v1.1.0
 sigs.k8s.io/yaml

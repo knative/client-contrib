@@ -84,7 +84,8 @@ Available Commands:
   remove      Remove registry settings
 
 Flags:
-  -h, --help   help for registry
+  -h, --help               help for registry
+  -n, --namespace string   Namespace
 
 Global Flags:
       --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
@@ -152,7 +153,8 @@ Unset Knative route domain mydomain.com
 $ kn admin registry add \
   --server=[REGISTRY_SERVER_URL] \
   --username=[REGISTRY_USER] \
-  --password=[REGISTRY_PASSWORD]
+  --password=[REGISTRY_PASSWORD] \
+  -n [NAMESPACE]
 -----
 =====
 
@@ -161,7 +163,8 @@ $ kn admin registry add \
 -----
 $ kn admin registry remove \
   --username=[REGISTRY_USER] \
-  --server=[REGISTRY_SERVER_URL]
+  --server=[REGISTRY_SERVER_URL] \
+  -n [NAMESPACE]
 -----
 =====
 
