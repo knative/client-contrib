@@ -25,6 +25,7 @@ import (
 	"knative.dev/client-contrib/plugins/admin/pkg/command"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/autoscaling"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/domain"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/profiling"
 	private_registry "knative.dev/client-contrib/plugins/admin/pkg/command/registry"
 )
 
@@ -50,6 +51,7 @@ func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	rootCmd.AddCommand(domain.NewDomainCmd(p))
 	rootCmd.AddCommand(private_registry.NewPrivateRegistryCmd(p))
 	rootCmd.AddCommand(autoscaling.NewAutoscalingCmd(p))
+	rootCmd.AddCommand(profiling.NewProfilingCommand(p))
 	rootCmd.AddCommand(command.NewVersionCommand())
 
 	// Add default help page if there's unknown command
