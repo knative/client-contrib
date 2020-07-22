@@ -91,7 +91,7 @@ func (f *kafkaSourceRunEFactory) CreateRunE() sourcetypes.RunE {
 		objectRef, err := f.KnSourceParams().SinkFlag.ResolveSink(dynamicClient, f.kafkaSourceClient.Namespace())
 		if err != nil {
 			return fmt.Errorf(
-				"cannot create Kafka '%s' in namespace '%s' "+
+				"cannot create kafka '%s' in namespace '%s' "+
 					"because: %s", name, f.kafkaSourceClient.Namespace(), err)
 		}
 
@@ -158,7 +158,7 @@ func (f *kafkaSourceRunEFactory) DeleteRunE() sourcetypes.RunE {
 
 func (f *kafkaSourceRunEFactory) UpdateRunE() sourcetypes.RunE {
 	return func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("Kafka source update is not supported because Kafka source spec is immutable.\n")
+		fmt.Printf("Kafka source update is not supported because kafka source spec is immutable.\n")
 		return nil
 	}
 }

@@ -1,14 +1,14 @@
 # kn-source-kafka
 
-`kn-source-kafka` is a plugin of Knative Client, for management of Kafka event
+`kn-source-kafka` is a plugin of Knative Client, for management of kafka event
 source interactively from the command line.
 
 ## Description
 
 `kn-source-kafka` is a plugin of Knative Client. You can create, describe and
-delete Kafka event sources. Go to
+delete kafka event sources. Go to
 [Knative Eventing document](https://knative.dev/docs/eventing/samples/kafka/source/)
-to understand more about Kafka event sources.
+to understand more about kafka event sources.
 
 ## Build and Install
 

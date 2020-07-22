@@ -58,7 +58,7 @@ func (c *kafkaSourceClient) KnSourceParams() *sourcetypes.KnSourceParams {
 	return c.kafkaSourceParams.KnSourceParams
 }
 
-// KafkaSourceParams for Kafka source specific parameters
+// KafkaSourceParams for kafka source specific parameters
 func (c *kafkaSourceClient) KafkaSourceParams() *types.KafkaSourceParams {
 	return c.kafkaSourceParams
 }
