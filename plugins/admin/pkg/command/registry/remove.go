@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,7 @@ var username string
 var server string
 
 // NewRegistryRmCommand represents the remove command
-func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
+func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
 	var registryRmCmd = &cobra.Command{
 		Use:     "remove",
 		Aliases: []string{"rm"},
@@ -45,7 +44,8 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
   kn admin registry remove \
     --username=[REGISTRY_USER] \
     --server=[REGISTRY_SERVER_URL] \
-    -n [NAMESPACE]`,
+    --namespace=[NAMESPACE] \
+    --serviceaccount=[SERVICE_ACCOUNT]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if username == "" {
 				return errors.New("'registry remove' requires the registry username provided with the --username option")
@@ -57,11 +57,15 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if p.Namespace == "" {
-				cmd.Print("No namespace specified, using default namespace\n")
+				cmd.Print("No namespace specified, using 'default' namespace\n")
 				p.Namespace = "default"
 			}
+			if p.ServiceAccount == "" {
+				cmd.Print("No serviceaccount specified, using 'default' serviceaccount\n")
+				p.ServiceAccount = "default"
+			}
 			// get all credential secrets which have the label managed-by=kn-admin-registry
-			secrets, err := p.ClientSet.CoreV1().Secrets(p.Namespace).List(metav1.ListOptions{
+			secrets, err := p.AdminParams.ClientSet.CoreV1().Secrets(p.Namespace).List(metav1.ListOptions{
 				LabelSelector: labels.SelectorFromSet(AdminRegistryLabels).String(),
 			})
 			if err != nil {
@@ -69,7 +73,7 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 			}
 
 			// filter the secrets with username and server
-			secretsMap := make(map[string]*corev1.Secret)
+			secretsMap := make(map[string]corev1.Secret)
 			for _, secret := range secrets.Items {
 				registry := Registry{}
 				err = json.Unmarshal(secret.Data[DockerJSONName], &registry)
@@ -78,7 +82,7 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 				}
 				for secretServer, secretAuth := range registry.Auths {
 					if secretServer == server && secretAuth.Username == username {
-						secretsMap[secret.Name] = &secret
+						secretsMap[secret.Name] = *secret.DeepCopy()
 					}
 				}
 			}
@@ -87,12 +91,12 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 				return nil
 			}
 
-			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Get("default", metav1.GetOptions{})
+			sa, err := p.AdminParams.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Get(p.ServiceAccount, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get ServiceAccount: %v", err)
+				return fmt.Errorf("failed to get serviceaccount '%s' in namespace '%s': %v", p.ServiceAccount, p.Namespace, err)
 			}
 
-			desiredSa := defaultSa.DeepCopy()
+			desiredSa := sa.DeepCopy()
 			imagePullSecrets := []corev1.LocalObjectReference{}
 			for _, ips := range desiredSa.ImagePullSecrets {
 				if _, ok := secretsMap[ips.Name]; !ok {
@@ -103,14 +107,14 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 			}
 
 			desiredSa.ImagePullSecrets = imagePullSecrets
-			_, err = p.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Update(desiredSa)
+			_, err = p.AdminParams.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Update(desiredSa)
 			if err != nil {
-				return fmt.Errorf("failed to remove registry secret in default ServiceAccount: %v", err)
+				return fmt.Errorf("failed to remove registry secret in serviceaccount '%s' in namespace '%s': %v", p.ServiceAccount, p.Namespace, err)
 			}
-			cmd.Printf("ImagePullSecrets of ServiceAccount '%s/%s' updated\n", desiredSa.Namespace, desiredSa.Name)
+			cmd.Printf("ImagePullSecrets of serviceaccount '%s' in namespace '%s' is updated\n", desiredSa.Name, desiredSa.Namespace)
 
 			deleteSecretsErrCh := make(chan error, len(secretsMap))
-			deleteSecrets(cmd, p.ClientSet, secretsMap, deleteSecretsErrCh)
+			deleteSecrets(cmd, p.AdminParams.ClientSet, secretsMap, deleteSecretsErrCh)
 
 			var deleteSecretsErr error
 			select {
@@ -129,29 +133,29 @@ func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 		},
 	}
 
-	registryRmCmd.Flags().StringVar(&username, "username", "", "Registry Username")
+	registryRmCmd.Flags().StringVar(&username, "username", "", "registry username")
 	registryRmCmd.MarkFlagRequired("username")
-	registryRmCmd.Flags().StringVar(&server, "server", "", "Registry Address")
+	registryRmCmd.Flags().StringVar(&server, "server", "", "registry address")
 	registryRmCmd.MarkFlagRequired("server")
 	registryRmCmd.InitDefaultHelpFlag()
 	return registryRmCmd
 }
 
-func deleteSecrets(cmd *cobra.Command, clientset kubernetes.Interface, secretsMap map[string]*corev1.Secret, errCh chan<- error) {
+func deleteSecrets(cmd *cobra.Command, clientset kubernetes.Interface, secretsMap map[string]corev1.Secret, errCh chan<- error) {
 	w := sync.WaitGroup{}
 	w.Add(len(secretsMap))
 	for _, s := range secretsMap {
-		go func(secret *corev1.Secret) {
+		go func(secret corev1.Secret) {
 			defer w.Done()
 			err := clientset.CoreV1().Secrets(secret.Namespace).Delete(secret.Name, &metav1.DeleteOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					cmd.Printf("Secret '%s/%s' not found, skipped\n", secret.Namespace, secret.Name)
+					cmd.Printf("Secret '%s' in namespace '%s' is not found, skipped\n", secret.Name, secret.Namespace)
 				} else {
-					errCh <- fmt.Errorf("failed to delete secret '%s/%s': %v", secret.Namespace, secret.Name, err)
+					errCh <- fmt.Errorf("failed to delete secret '%s' in namespace '%s': %v", secret.Name, secret.Namespace, err)
 				}
 			} else {
-				cmd.Printf("Secret '%s/%s' deleted\n", secret.Namespace, secret.Name)
+				cmd.Printf("Secret '%s' in namespace '%s' is deleted\n", secret.Name, secret.Namespace)
 			}
 		}(s)
 	}
