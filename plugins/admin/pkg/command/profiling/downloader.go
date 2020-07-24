@@ -57,9 +57,8 @@ type DownloadOptions interface {
 type Downloader struct {
 	podName    string
 	namespace  string
-	stopCh     <-chan struct{} // Close this will trigger closing for the endCh create by our own and then cancel all sub goroutines
-	endCh      chan struct{}
-	readyCh    chan struct{}
+	readyCh    chan struct{} // closed by portforward.ForwardPorts when connection is ready
+	stopCh     chan struct{} // our private chan which can be closed by us safely
 	restConfig *rest.Config
 	localPort  uint32
 	client     *http.Client
@@ -71,12 +70,12 @@ func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan str
 		podName:    podName,
 		namespace:  namespace,
 		readyCh:    make(chan struct{}),
-		stopCh:     endCh,
+		stopCh:     make(chan struct{}),
 		restConfig: cfg,
 		localPort:  18008,
 		client:     http.DefaultClient,
 	}
-	err := d.connect()
+	err := d.connect(endCh)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan str
 }
 
 // non-blocking call to forward remote port in pod to localhost
-func (d *Downloader) connect() error {
+func (d *Downloader) connect(endCh <-chan struct{}) error {
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", d.namespace, d.podName)
 	transport, upgrader, err := spdy.RoundTripperFor(d.restConfig)
 	if err != nil {
@@ -100,12 +99,12 @@ func (d *Downloader) connect() error {
 		Path:   path,
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", d.localPort, pprofPort)}, d.stopCh, d.readyCh, os.Stdout, os.Stderr)
+	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", d.localPort, pprofPort)}, endCh, d.readyCh, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
 	go func() {
-		defer close(d.endCh)
+		defer close(d.stopCh)
 		err := fw.ForwardPorts()
 		// if the func ForwardPorts() returns, the connection should not be available.
 		if err != nil {
@@ -148,7 +147,7 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			// request succeeded
 			case <-ctx.Done():
 				break
-			case <-d.endCh:
+			case <-d.stopCh:
 				cancel()
 			}
 		}()
@@ -171,7 +170,7 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			return err
 		}
 		return nil
-	case <-d.endCh:
+	case <-d.stopCh:
 		return nil
 	}
 }
