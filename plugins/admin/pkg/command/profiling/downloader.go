@@ -1,4 +1,4 @@
-package main
+package profiling
 
 import (
 	"context"
@@ -16,13 +16,12 @@ import (
 )
 
 const (
-	pprofPort uint32 = 8008
+	pprofPort  uint32 = 8008
+	secondsKey        = "seconds"
 )
 
 // ProfileType enums for all supported profiles
 type ProfileType int
-
-const secondsKey = "seconds"
 
 const (
 	ProfileTypeUnknown ProfileType = iota
@@ -33,20 +32,20 @@ const (
 	ProfileTypeAllocs
 	ProfileTypeMutex
 	ProfileTypeGoroutine
-	ProfileTypeThreadCreat
+	ProfileTypeThreadCreate
 )
 
 // ProfileEndpoints array maps ProfileType to the string endpoint for pprof
 var ProfileEndpoints = [...]string{
-	ProfileTypeUnknown:     "",
-	ProfileTypeHeap:        "heap",
-	ProfileTypeProfile:     "profile",
-	ProfileTypeBlock:       "block",
-	ProfileTypeTrace:       "trace",
-	ProfileTypeAllocs:      "allocs",
-	ProfileTypeMutex:       "mutex",
-	ProfileTypeGoroutine:   "goroutine",
-	ProfileTypeThreadCreat: "threadcreate",
+	ProfileTypeUnknown:      "",
+	ProfileTypeHeap:         "heap",
+	ProfileTypeProfile:      "profile",
+	ProfileTypeBlock:        "block",
+	ProfileTypeTrace:        "trace",
+	ProfileTypeAllocs:       "allocs",
+	ProfileTypeMutex:        "mutex",
+	ProfileTypeGoroutine:    "goroutine",
+	ProfileTypeThreadCreate: "threadcreate",
 }
 
 // DownloadOptions interface to manipulate the http request to pprof server
@@ -56,10 +55,9 @@ type DownloadOptions interface {
 
 // Downloader struct holds all private fields
 type Downloader struct {
-	podName   string
-	namespace string
-	// Close this will trigger closing for the endCh create by our own and then cancel all sub goroutines
-	stopCh     <-chan struct{}
+	podName    string
+	namespace  string
+	stopCh     <-chan struct{} // Close this will trigger closing for the endCh create by our own and then cancel all sub goroutines
 	endCh      chan struct{}
 	readyCh    chan struct{}
 	restConfig *rest.Config
