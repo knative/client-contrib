@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/tools/clientcmd"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/profiling"
 )
 
 // DO NOT COMMIT
@@ -40,7 +41,7 @@ func main() {
 	}
 
 	podName := pods.Items[0].Name
-	d, err := NewDownloader(cfg, podName, "knative-serving", end)
+	d, err := profiling.NewDownloader(cfg, podName, "knative-serving", end)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +52,7 @@ func main() {
 	f1, _ := ioutil.TempFile("", "")
 	defer f1.Close()
 	log.Println("downloading 5s CPU profile")
-	err = d.Download(ProfileTypeProfile, f1, ProfilingTime(5*time.Second))
+	err = d.Download(profiling.ProfileTypeProfile, f1, profiling.ProfilingTime(5*time.Second))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +60,7 @@ func main() {
 	f2, _ := ioutil.TempFile("", "")
 	defer f2.Close()
 	log.Println("downloading heap profile")
-	err = d.Download(ProfileTypeHeap, f2)
+	err = d.Download(profiling.ProfileTypeHeap, f2)
 	if err != nil {
 		log.Fatal(err)
 	}
