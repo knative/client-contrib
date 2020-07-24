@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -161,10 +162,17 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			}
 		}
 		resp, err := d.client.Do(req)
+		defer resp.Body.Close()
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf("download error: %s, code %d", string(body), resp.StatusCode)
+		}
 		_, err = io.Copy(output, resp.Body)
 		if err != nil {
 			return err
