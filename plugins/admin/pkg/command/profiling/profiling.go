@@ -15,19 +15,17 @@
 package profiling
 
 import (
-	//"encoding/json"
-	//"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
-	//"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	corev1 "k8s.io/api/core/v1"
-	//apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/utils"
@@ -44,41 +42,68 @@ const (
   # To download 2 minutes execution trace data of networking-istio
   kn admin profiling --target networking-istio --trace 2m
 
-  # To download cpu profile data of activator and save to specified folder
-  kn admin profiling --target activator --profile --save-path /tmp
+  # To download go routing block and memory allocations data of activator and save them to /tmp
+  kn admin profiling --target activator --block --mem-allocs --save-to /tmp
 
   # To download all available profile data for specified pod activator-5979f56548
   kn admin profiling --target activator-5979f56548 --all
 `
 
-	targetFlagUsgae       = "The profiling target. It can be a Knative component name or a specific pod name, e.g: activator or activator-5979f56548"
-	savePathFlagUsage     = "The path to save the downloaded profile data, if not speicifed, the data will be saved in current working folder"
+	targetFlagUsgae       = "The profiling target. It can be a Knative component name or a specific pod name, e.g: 'activator' or 'activator-586d468c99-w59cm'"
+	saveToFlagUsage       = "The path to save the downloaded profile data, if not speicifed, the data will be saved in current working folder"
+	allFlagUsage          = "Download all available profile data"
+	cpuFlagUsage          = "Download cpu profile data, you can specify a profile data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute"
 	heapFlagUsage         = "Download heap profile data"
-	cpuFlagUsage          = "Download cpu profile data, you can specify the duration with seconds, minutes or hours, e.g: 1m for one minute cpu profile data"
-	blockFlagUsgae        = "Download Go routine blocking data"
-	traceFlagUsage        = "Download execution trace data, you can specify the duration with seconds, minutes or hours, e.g: 5s for 5 seconds trace data"
-	memoryAllocsFlagUsage = "Download all memory allocations data"
+	blockFlagUsage        = "Download go routine blocking data"
+	traceFlagUsage        = "Download execution trace data, you can specify a trace data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute"
+	memAllocsFlagUsage    = "Download memory allocations data"
 	mutexFlagUsage        = "Download holders of contended mutexes data"
-	goroutineFlagUsage    = "Download stack traces of all current goroutines"
-	threadCreateFlagUsage = "Download stack traces that led to the creation of new OS threads"
+	goroutineFlagUsage    = "Download stack traces of all current goroutines data"
+	threadCreateFlagUsage = "Download stack traces that led to the creation of new OS threads data"
 
-	knNamespace  = "knative-serving"
-	obsConfigMap = "config-observability"
+	cpuFlagName          = "cpu"
+	heapFlagName         = "heap"
+	blockFlagName        = "block"
+	traceFlagName        = "trace"
+	memAllocsFlagName    = "mem-allocs"
+	mutexFlagName        = "mutex"
+	goroutineFlagName    = "goroutine"
+	threadCreateFlagName = "thread-create"
+	knNamespace          = "knative-serving"
+	obsConfigMap         = "config-observability"
+	defaultDuration      = 5
+	defaultProfilingTime = ProfilingTime(defaultDuration * time.Second)
 )
+
+// profilingFlags defines flag values for profiling command
+type profilingFlags struct {
+	enable              bool
+	disable             bool
+	target              string
+	saveTo              string
+	allProfiles         bool
+	cpuProfile          string
+	heapProfile         bool
+	blockProfile        bool
+	traceProfile        string
+	memAllocsProfile    bool
+	mutexProfile        bool
+	goroutineProfile    bool
+	threadCreateProfile bool
+}
+
+// profileTypeOption is a helper struct to download profile type data
+type profileTypeOption struct {
+	profileType    ProfileType
+	downloadOption DownloadOptions
+}
+
+// declare newDownloaderFunc variable to help us write UT
+var newDownloaderFunc = NewDownloader
 
 // NewProfilingCommand creates a profiling command
 func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
-	var enableProfiling bool
-	var disableProfiling bool
-	var target string
-	var savePath string
-	//var heapFlagVal bool
-	var cpuFlagVal string
-	//var blockFlagVal bool
-	var traceFlagVal string
-	//var memAllocsFlagVal bool
-	//var goroutineFlagVal bool
-	//var threadCreateFlagVal bool
+	pflags := profilingFlags{}
 
 	var profilingCmd = &cobra.Command{
 		Use:     "profiling",
@@ -87,34 +112,75 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 		Long:    `Enable Knative components profiling and download profile data`,
 		Example: profilingExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			flags := cmd.Flags()
+			// no flag given, print help
+			if flags.NFlag() < 1 {
+				cmd.Help()
+				return nil
+			}
+
+			isEnableSet := flags.Changed("enable")
+			isDisableSet := flags.Changed("disable")
+			isTargetSet := flags.Changed("target")
+			isSaveToSet := flags.Changed("save-to")
+			isAllProfilesSet := flags.Changed("all")
+			isProfileTypeSet := (flags.Changed(cpuFlagName) || flags.Changed(heapFlagName) || flags.Changed(blockFlagName) ||
+				flags.Changed(traceFlagName) || flags.Changed(memAllocsFlagName) || flags.Changed(mutexFlagName) ||
+				flags.Changed(goroutineFlagName) || flags.Changed(threadCreateFlagName))
+
+			// enable and disable can't be used togerther
+			if isEnableSet && isDisableSet {
+				return fmt.Errorf("flags '--enable' and '--disable' can not be used together")
+			}
+
+			// enable or disable can't be used with other flags
+			if (isEnableSet || isDisableSet) && (isTargetSet || isProfileTypeSet || isAllProfilesSet || isSaveToSet) {
+				return fmt.Errorf("flag '--enable' or '--disable' can not be used with other flags")
+			}
+
+			// --target flag is needed
+			if !isTargetSet && (isProfileTypeSet || isAllProfilesSet || isSaveToSet) {
+				return fmt.Errorf("requires '--target' flag")
+			}
+
+			// --profile-type is needed
+			if !isProfileTypeSet && !isAllProfilesSet && (isTargetSet || isSaveToSet) {
+				return fmt.Errorf("requires '--all' or a specific profile type flag")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if cmd.Flags().Changed("enable") {
+			flags := cmd.Flags()
+			if flags.NFlag() < 1 {
+				return nil
+			} else if flags.Changed("enable") {
 				return configProfiling(p.ClientSet, cmd, true)
-			} else if cmd.Flags().Changed("disable") {
+			} else if flags.Changed("disable") {
 				return configProfiling(p.ClientSet, cmd, false)
+			} else {
+				return downloadProfileData(p, cmd, &pflags)
 			}
-			return nil
 		},
 	}
 
 	flags := profilingCmd.Flags()
-	flags.BoolVar(&enableProfiling, "enable", false, "Enable Knative profiling")
-	flags.BoolVar(&disableProfiling, "disable", false, "Disable Knative profiling")
-	flags.StringVarP(&target, "target", "t", "", targetFlagUsgae)
-	flags.StringVarP(&savePath, "save-path", "s", "", savePathFlagUsage)
-	flags.Bool("heap", false, heapFlagUsage)
-	flags.StringVar(&cpuFlagVal, "cpu", "30s", cpuFlagUsage)
-	flags.Bool("block", false, blockFlagUsgae)
-	flags.StringVar(&traceFlagVal, "trace", "30s", traceFlagUsage)
-	flags.Bool("mem-allocs", false, memoryAllocsFlagUsage)
-	flags.Bool("mutex", false, mutexFlagUsage)
-	flags.Bool("goroutine", false, goroutineFlagUsage)
-	flags.Bool("thread-create", false, threadCreateFlagUsage)
+	flags.BoolVar(&pflags.enable, "enable", false, "Enable Knative profiling")
+	flags.BoolVar(&pflags.disable, "disable", false, "Disable Knative profiling")
+	flags.StringVarP(&pflags.target, "target", "t", "", targetFlagUsgae)
+	flags.StringVarP(&pflags.saveTo, "save-to", "s", "", saveToFlagUsage)
+	flags.BoolVar(&pflags.allProfiles, "all", false, allFlagUsage)
+	flags.StringVarP(&pflags.cpuProfile, cpuFlagName, "", "5", cpuFlagUsage)
+	flags.BoolVar(&pflags.heapProfile, heapFlagName, false, heapFlagUsage)
+	flags.BoolVar(&pflags.blockProfile, blockFlagName, false, blockFlagUsage)
+	flags.StringVarP(&pflags.traceProfile, traceFlagName, "", "5", traceFlagUsage)
+	flags.BoolVar(&pflags.memAllocsProfile, memAllocsFlagName, false, memAllocsFlagUsage)
+	flags.BoolVar(&pflags.mutexProfile, mutexFlagName, false, mutexFlagUsage)
+	flags.BoolVar(&pflags.goroutineProfile, goroutineFlagName, false, goroutineFlagUsage)
+	flags.BoolVar(&pflags.threadCreateProfile, threadCreateFlagName, false, threadCreateFlagUsage)
 	return profilingCmd
 }
 
+// configProfiling enables or disables knative profiling
 func configProfiling(c kubernetes.Interface, cmd *cobra.Command, enable bool) error {
 	currentCm := &corev1.ConfigMap{}
 	currentCm, err := c.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
@@ -129,21 +195,20 @@ func configProfiling(c kubernetes.Interface, cmd *cobra.Command, enable bool) er
 		desiredCm.Data["profiling.enable"] = "false"
 	}
 
-	//cmd.Printf("%+v", *desiredCm)
-	//cmd.Printf("Enable: %+v", currentCm.Data["profiling.enable"])
 	err = utils.UpdateConfigMap(c, desiredCm)
 	if err != nil {
 		return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", obsConfigMap, knNamespace, err)
 	}
 
 	if enable {
-		cmd.Print("Knative profiling is enabled")
+		cmd.Println("Knative profiling is enabled")
 	} else {
-		cmd.Print("Knative profiling is disabled")
+		cmd.Println("Knative profiling is disabled")
 	}
 	return nil
 }
 
+// isProfilingEnabled checks if the profiling is enabled
 func isProfilingEnabled(c kubernetes.Interface) (bool, error) {
 	currentCm := &corev1.ConfigMap{}
 	currentCm, err := c.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
@@ -160,24 +225,239 @@ func isProfilingEnabled(c kubernetes.Interface) (bool, error) {
 // parseDuration parses the given duration string to integer seconds, the duration is an integer plusing a character
 // 's', 'm' and 'h' to express seconds, minutes and hours
 func parseDuration(duration string) (int, error) {
-	l := len(duration)
-	if l < 2 {
-		return 0, fmt.Errorf("invalid duation: %s", duration)
+	duration = strings.TrimSpace(duration)
+	if duration == "" {
+		return defaultDuration, nil
 	}
 
-	unit := strings.ToLower(duration[l-1:])
+	l := len(duration)
+	unit := duration[l-1]
+	// duration is numberic
+	if unit >= '0' && unit <= '9' {
+		n, err := strconv.ParseInt(duration, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+		return int(n), nil
+	}
+
+	// parse duration[:l-1] as int
 	n, err := strconv.ParseInt(duration[:l-1], 10, 32)
 	if err != nil {
 		return 0, err
 	}
 
-	if unit == "s" {
+	// calculate duration by unit
+	if unit == 's' || unit == 'S' {
 		return int(n), nil
-	} else if unit == "m" {
+	} else if unit == 'm' || unit == 'M' {
 		return int(n) * 60, nil
-	} else if unit == "h" {
+	} else if unit == 'h' || unit == 'H' {
 		return int(n) * 3600, nil
 	} else {
 		return 0, fmt.Errorf("invalid duration: %s, only supports 's', 'm' and 'h' units", duration)
 	}
+}
+
+// durationDescription describes a given seconds as 0h0m0s format
+func durationDescription(seconds int64) string {
+	if seconds < 1 {
+		return fmt.Sprintf("%ds", seconds)
+	}
+
+	s := ""
+	if hours := seconds / 3600; hours > 0 {
+		s = fmt.Sprintf("%dh", hours)
+	}
+	left := seconds % 3600
+	if mins := left / 60; mins > 0 {
+		s = fmt.Sprintf("%s%dm", s, mins)
+	}
+	if secs := left % 60; secs > 0 {
+		s = fmt.Sprintf("%s%ds", s, secs)
+	}
+	return s
+}
+
+// downloadProfileData downloads profile data by given profile type
+func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profilingFlags) error {
+	// check profile types
+	profileTypes := map[string]profileTypeOption{}
+	if pflags.allProfiles {
+		// all profile types
+		profileTypes[cpuFlagName] = profileTypeOption{
+			profileType:    ProfileTypeProfile,
+			downloadOption: defaultProfilingTime,
+		}
+		profileTypes[heapFlagName] = profileTypeOption{profileType: ProfileTypeProfile}
+		profileTypes[blockFlagName] = profileTypeOption{profileType: ProfileTypeBlock}
+		profileTypes[traceFlagName] = profileTypeOption{
+			profileType:    ProfileTypeTrace,
+			downloadOption: defaultProfilingTime,
+		}
+		profileTypes[memAllocsFlagName] = profileTypeOption{profileType: ProfileTypeAllocs}
+		profileTypes[mutexFlagName] = profileTypeOption{profileType: ProfileTypeMutex}
+		profileTypes[goroutineFlagName] = profileTypeOption{profileType: ProfileTypeGoroutine}
+		profileTypes[threadCreateFlagName] = profileTypeOption{profileType: ProfileTypeThreadCreate}
+	} else {
+		flags := cmd.Flags()
+		// cpu profile type
+		if flags.Changed(cpuFlagName) {
+			op := profileTypeOption{profileType: ProfileTypeProfile}
+			if pflags.cpuProfile == "" {
+				op.downloadOption = defaultProfilingTime
+			} else {
+				duration, err := parseDuration(pflags.cpuProfile)
+				if err != nil {
+					return err
+				}
+				op.downloadOption = ProfilingTime(time.Duration(duration) * time.Second)
+			}
+			profileTypes[cpuFlagName] = op
+		}
+		// heap profile type
+		if flags.Changed(heapFlagName) {
+			profileTypes[heapFlagName] = profileTypeOption{profileType: ProfileTypeHeap}
+		}
+		// block profile type
+		if flags.Changed(blockFlagName) {
+			profileTypes[blockFlagName] = profileTypeOption{profileType: ProfileTypeBlock}
+		}
+		// trace profile type
+		if flags.Changed(traceFlagName) {
+			op := profileTypeOption{profileType: ProfileTypeTrace}
+			if pflags.traceProfile == "" {
+				op.downloadOption = defaultProfilingTime
+			} else {
+				duration, err := parseDuration(pflags.traceProfile)
+				if err != nil {
+					return err
+				}
+				op.downloadOption = ProfilingTime(time.Duration(duration) * time.Second)
+			}
+			profileTypes[traceFlagName] = op
+		}
+		// mem-allocs profile type
+		if flags.Changed(memAllocsFlagName) {
+			profileTypes[memAllocsFlagName] = profileTypeOption{profileType: ProfileTypeAllocs}
+		}
+		// mutex profile type
+		if flags.Changed(mutexFlagName) {
+			profileTypes[mutexFlagName] = profileTypeOption{profileType: ProfileTypeMutex}
+		}
+		// goroutine profile type
+		if flags.Changed(goroutineFlagName) {
+			profileTypes[goroutineFlagName] = profileTypeOption{profileType: ProfileTypeGoroutine}
+		}
+		// thread-create profile type
+		if flags.Changed(threadCreateFlagName) {
+			profileTypes[threadCreateFlagName] = profileTypeOption{profileType: ProfileTypeThreadCreate}
+		}
+	}
+
+	// check --save-to path
+	var err error
+	if pflags.saveTo == "" {
+		pflags.saveTo, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("fail to get current working folder to save profile data: %+v", err)
+		}
+	} else {
+		stat, err := os.Stat(pflags.saveTo)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("the specified save path '%s' doesn't exist", pflags.saveTo)
+		} else if err != nil {
+			return err
+		}
+		if !stat.IsDir() {
+			return fmt.Errorf("the specified save path '%s' is not a folder", pflags.saveTo)
+		}
+	}
+
+	// check if profiling is enabled, if not, print message to ask user enable it first
+	enabled, err := isProfilingEnabled(p.ClientSet)
+	if err != nil {
+		return err
+	}
+	if !enabled {
+		return fmt.Errorf("profiling is not enabled, please use '--enable' to enalbe it first")
+	}
+
+	// try to find target as a knative component name
+	pods, err := p.ClientSet.CoreV1().Pods(knNamespace).List(metav1.ListOptions{LabelSelector: "app=" + pflags.target})
+	if err != nil {
+		return err
+	}
+	// if no pod found, try to find target as a pod name in knative namespace
+	if len(pods.Items) < 1 {
+		pods, err = p.ClientSet.CoreV1().Pods(knNamespace).List(metav1.ListOptions{})
+		if err != nil {
+			return err
+		}
+		if len(pods.Items) < 1 {
+			return fmt.Errorf("fail to get profiling target '%s'", pflags.target)
+		}
+
+		// check if target is found as pod
+		found := false
+		for _, p := range pods.Items {
+			if p.Name == pflags.target {
+				pods.Items = []corev1.Pod{p}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("fail to get profiling target '%s'", pflags.target)
+		}
+	}
+
+	restConfig, err := p.RestConfig()
+	if err != nil {
+		return err
+	}
+
+	// iterates pods to download specified profile data
+	for _, pod := range pods.Items {
+		err = func() error {
+			cmd.Printf("Starting to download profile data for pod %s...\n", pod.Name)
+			end := make(chan struct{})
+			downloader, err := newDownloaderFunc(restConfig, pod.Name, knNamespace, end)
+			if err != nil {
+				return err
+			}
+			defer close(end)
+
+			// iterates specified profile types to download data
+			for k, v := range profileTypes {
+				duration := ""
+				filename := pod.Name + "_" + k
+				options := []DownloadOptions{}
+				if t, ok := v.downloadOption.(ProfilingTime); ok {
+					seconds := int64(time.Duration(t) / time.Second)
+					duration = strconv.FormatInt(seconds, 10) + " second(s) "
+					filename += "_" + durationDescription(seconds)
+					options = append(options, v.downloadOption)
+				}
+				filename += "_" + time.Now().Format("20060102150405")
+				dataFilePath := filepath.Join(pflags.saveTo, filename)
+				f, err := os.Create(dataFilePath)
+				if err != nil {
+					return err
+				}
+
+				cmd.Printf("Saving %s%s profile data to %s\n", duration, k, dataFilePath)
+				err = downloader.Download(v.profileType, f, options...)
+				f.Close()
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
