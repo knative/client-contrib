@@ -34,7 +34,6 @@ import (
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 	"knative.dev/client-contrib/plugins/admin/pkg"
-
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
 

@@ -149,7 +149,7 @@ Examples:
 Flags:
       --all              Download all profile data
       --block            Download go routine blocking data
-      --cpu string       Download cpu profile data, you can specify a profile data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5")
+      --cpu string       Download cpu profile data, you can specify a profile data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
       --disable          Disable Knative profiling
       --enable           Enable Knative profiling
       --goroutine        Download stack traces of all current goroutines data
@@ -160,7 +160,7 @@ Flags:
   -s, --save-to string   The path to save the downloaded profile data, if not speicifed, the data will be saved in current working folder
   -t, --target string    The profiling target. It can be a Knative component name or a specific pod name, e.g: 'activator' or 'activator-586d468c99-w59cm'
       --thread-create    Download stack traces that led to the creation of new OS threads data
-      --trace string     Download execution trace data, you can specify a trace data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5")
+      --trace string     Download execution trace data, you can specify a trace data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
 
 Global Flags:
       --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
