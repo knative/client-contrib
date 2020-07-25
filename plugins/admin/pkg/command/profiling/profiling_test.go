@@ -507,8 +507,8 @@ func TestNewProfilingCommand(t *testing.T) {
 		assert.NilError(t, err)
 		saveFile := filepath.Join(cwd, podName)
 		assert.Check(t, strings.Contains(out, "Saving 8 second(s) cpu profile data to "+saveFile+"_cpu"), "expected saving cpu profile data output for "+podName)
-		assert.Check(t, strings.Contains(out, "Saving block profile data to "+saveFile+"_block"), "expected saving cpu profile data output for "+podName)
-		assert.Check(t, strings.Contains(out, "Saving mutex profile data to "+saveFile+"_mutex"), "expected saving cpu profile data output for "+podName)
+		assert.Check(t, strings.Contains(out, "Saving block profile data to "+saveFile+"_block"), "expected saving block profile data output for "+podName)
+		assert.Check(t, strings.Contains(out, "Saving mutex profile data to "+saveFile+"_mutex"), "expected saving mutex profile data output for "+podName)
 	})
 
 	t.Run("successfully downloaded all profile types data", func(t *testing.T) {
