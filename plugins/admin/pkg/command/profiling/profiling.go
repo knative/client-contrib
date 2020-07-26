@@ -72,7 +72,7 @@ const (
 	knNamespace          = "knative-serving"
 	obsConfigMap         = "config-observability"
 	defaultDuration      = 5
-	defaultProfilingTime = ProfilingTime(defaultDuration * time.Second)
+	defaultProfilingTime = OptionProfilingTime(defaultDuration * time.Second)
 )
 
 // profilingFlags defines flag values for profiling command
@@ -311,7 +311,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 				if err != nil {
 					return err
 				}
-				op.downloadOption = ProfilingTime(time.Duration(duration) * time.Second)
+				op.downloadOption = OptionProfilingTime(time.Duration(duration) * time.Second)
 			}
 			profileTypes[cpuFlagName] = op
 		}
@@ -333,7 +333,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 				if err != nil {
 					return err
 				}
-				op.downloadOption = ProfilingTime(time.Duration(duration) * time.Second)
+				op.downloadOption = OptionProfilingTime(time.Duration(duration) * time.Second)
 			}
 			profileTypes[traceFlagName] = op
 		}
@@ -433,7 +433,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 				duration := ""
 				filename := pod.Name + "_" + k
 				options := []DownloadOptions{}
-				if t, ok := v.downloadOption.(ProfilingTime); ok {
+				if t, ok := v.downloadOption.(OptionProfilingTime); ok {
 					seconds := int64(time.Duration(t) / time.Second)
 					duration = strconv.FormatInt(seconds, 10) + " second(s) "
 					filename += "_" + durationDescription(seconds)

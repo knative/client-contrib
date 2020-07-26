@@ -1,15 +1,13 @@
 package profiling
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
-	"time"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
@@ -18,7 +16,8 @@ import (
 
 const (
 	pprofPort  uint32 = 8008
-	secondsKey        = "seconds"
+	localPort  uint32 = 18008
+	secondsKey string = "seconds"
 )
 
 // ProfileType enums for all supported profiles
@@ -49,24 +48,24 @@ var ProfileEndpoints = [...]string{
 	ProfileTypeThreadCreate: "threadcreate",
 }
 
-// DownloadOptions interface to manipulate the http request to pprof server
-type DownloadOptions interface {
-	Apply(*http.Request) error
-}
-
 // Downloader struct holds all private fields
 type Downloader struct {
 	podName    string
 	namespace  string
-	readyCh    chan struct{} // closed by portforward.ForwardPorts when connection is ready
+	readyCh    chan struct{} // closed by portforward.ForwardPorts() when connection is ready
 	stopCh     chan struct{} // our private chan which can be closed by us safely
 	restConfig *rest.Config
 	localPort  uint32
 	client     *http.Client
 }
 
+// ProfileDownloader interface for profile downloader
+type ProfileDownloader interface {
+	Download(ProfileType, io.Writer, ...DownloadOptions) error
+}
+
 // NewDownloader returns the profiling downloader and setup connections asynchronously
-func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan struct{}) (*Downloader, error) {
+func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan struct{}) (ProfileDownloader, error) {
 	d := &Downloader{
 		podName:    podName,
 		namespace:  namespace,
@@ -100,7 +99,8 @@ func (d *Downloader) connect(endCh <-chan struct{}) error {
 		Path:   path,
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", d.localPort, pprofPort)}, endCh, d.readyCh, os.Stdout, os.Stderr)
+	out := &bytes.Buffer{}
+	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", d.localPort, pprofPort)}, endCh, d.readyCh, out, out)
 	if err != nil {
 		return err
 	}
@@ -115,22 +115,10 @@ func (d *Downloader) connect(endCh <-chan struct{}) error {
 	return nil
 }
 
-// ProfilingTime is option to add a seconds param in the http request
-type ProfilingTime time.Duration
-
-// Apply implements DownloadOptions interface for type ProfilingTime
-func (pr ProfilingTime) Apply(req *http.Request) error {
-	query := req.URL.Query()
-	seconds := int64(time.Duration(pr) / time.Second)
-	query.Set(secondsKey, strconv.FormatInt(seconds, 10))
-	req.URL.RawQuery = query.Encode()
-	return nil
-}
-
 // Download specific type of profile with options
 func (d *Downloader) Download(t ProfileType, output io.Writer, options ...DownloadOptions) error {
 	if t <= ProfileTypeUnknown || t >= ProfileType(len(ProfileEndpoints)) {
-		return fmt.Errorf("unknown profiling type %d", t)
+		return fmt.Errorf("unsupported profiling type %d", t)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -162,7 +150,11 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			}
 		}
 		resp, err := d.client.Do(req)
-		defer resp.Body.Close()
+		defer func() {
+			if resp != nil && resp.Body != nil {
+				resp.Body.Close()
+			}
+		}()
 		if err != nil {
 			return err
 		}
@@ -179,6 +171,6 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 		}
 		return nil
 	case <-d.stopCh:
-		return nil
+		return fmt.Errorf("download failed")
 	}
 }
