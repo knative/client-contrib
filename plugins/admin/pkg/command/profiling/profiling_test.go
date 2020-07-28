@@ -31,7 +31,6 @@ import (
 	k8srt "k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	k8sfakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
-	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
@@ -57,8 +56,8 @@ func (d *fakeDownloader) Download(t ProfileType, output io.Writer, options ...Do
 	return d.error
 }
 
-func fakeDownloaderBuilder(newError, downloadError error) func(*rest.Config, string, string, <-chan struct{}) (ProfileDownloader, error) {
-	return func(*rest.Config, string, string, <-chan struct{}) (ProfileDownloader, error) {
+func fakeDownloaderBuilder(newError, downloadError error) func(RestConfigGetter, string, string, <-chan struct{}) (ProfileDownloader, error) {
+	return func(RestConfigGetter, string, string, <-chan struct{}) (ProfileDownloader, error) {
 		return &fakeDownloader{error: downloadError}, newError
 	}
 }

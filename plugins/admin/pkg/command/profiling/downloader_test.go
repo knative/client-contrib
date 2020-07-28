@@ -30,12 +30,12 @@ import (
 
 func TestProfileDownload(t *testing.T) {
 	t.Run("download heap profile success", func(t *testing.T) {
-		downloadData := "some-binary-data"
+		downloadData := []byte("some-binary-data")
 		server := httptest.NewServer(http.HandlerFunc(
 			func(rw http.ResponseWriter, req *http.Request) {
 				assert.Equal(t, "/debug/pprof/heap", req.URL.RequestURI())
 				rw.WriteHeader(http.StatusOK)
-				io.WriteString(rw, downloadData)
+				rw.Write(downloadData)
 			},
 		))
 		defer server.Close()
@@ -64,8 +64,7 @@ func TestProfileDownload(t *testing.T) {
 
 		bs, err := ioutil.ReadAll(output)
 		assert.NilError(t, err)
-
-		assert.Equal(t, downloadData, string(bs))
+		assert.DeepEqual(t, downloadData, bs)
 	})
 
 	t.Run("download error caused by response code", func(t *testing.T) {
@@ -144,11 +143,11 @@ func TestProfileDownload(t *testing.T) {
 	})
 
 	t.Run("request canceled while download is started", func(t *testing.T) {
-		downloadData := "some-binary-data"
+		downloadData := []byte("some-binary-data")
 		server := httptest.NewServer(http.HandlerFunc(
 			func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
-				for _, b := range []byte(downloadData) {
+				for _, b := range downloadData {
 					<-time.After(time.Second) // write at 1 byte/second
 					rw.Write([]byte{b})
 				}

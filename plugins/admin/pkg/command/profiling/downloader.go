@@ -78,8 +78,17 @@ type ProfileDownloader interface {
 	Download(ProfileType, io.Writer, ...DownloadOptions) error
 }
 
+// RestConfigGetter interface to get restconfig
+type RestConfigGetter interface {
+	RestConfig() (*rest.Config, error)
+}
+
 // NewDownloader returns the profiling downloader and setup connections asynchronously
-func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan struct{}) (ProfileDownloader, error) {
+func NewDownloader(cfgGetter RestConfigGetter, podName, namespace string, endCh <-chan struct{}) (ProfileDownloader, error) {
+	cfg, err := cfgGetter.RestConfig()
+	if err != nil {
+		return nil, err
+	}
 	d := &Downloader{
 		podName:    podName,
 		namespace:  namespace,
@@ -89,7 +98,7 @@ func NewDownloader(cfg *rest.Config, podName, namespace string, endCh <-chan str
 		localPort:  18008,
 		client:     http.DefaultClient,
 	}
-	err := d.connect(endCh)
+	err = d.connect(endCh)
 	if err != nil {
 		return nil, err
 	}

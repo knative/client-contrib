@@ -412,17 +412,12 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 		}
 	}
 
-	restConfig, err := p.RestConfig()
-	if err != nil {
-		return err
-	}
-
 	// iterates pods to download specified profile data
 	for _, pod := range pods.Items {
 		err = func() error {
 			cmd.Printf("Starting to download profile data for pod %s...\n", pod.Name)
 			end := make(chan struct{})
-			downloader, err := newDownloaderFunc(restConfig, pod.Name, knNamespace, end)
+			downloader, err := newDownloaderFunc(p, pod.Name, knNamespace, end)
 			if err != nil {
 				return err
 			}
