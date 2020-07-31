@@ -271,7 +271,7 @@ func TestProfileDownload(t *testing.T) {
 		d.errorCh <- e
 		var err error
 		err = <-errChan
-		assert.Check(t, errors.Is(err, e))
+		assert.Error(t, err, e.Error())
 	})
 
 	t.Run("request canceled while download is started", func(t *testing.T) {
