@@ -33,7 +33,7 @@ import (
 
 const (
 	profilingExample = `
-  # To enable profiling 
+  # To enable profiling
   kn admin profiling --enable
 
   # To download heap profile data of autoscaler
