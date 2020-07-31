@@ -16,17 +16,147 @@ package profiling
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 	"time"
 
 	"gotest.tools/assert"
+	"k8s.io/apimachinery/pkg/util/httpstream"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport/spdy"
 )
+
+func fakeDialerFunc(t *testing.T, expectedURL *url.URL, exceptedError error) func(upgrader spdy.Upgrader, client *http.Client, method string, url *url.URL) httpstream.Dialer {
+	return func(upgrader spdy.Upgrader, client *http.Client, method string, url *url.URL) httpstream.Dialer {
+		return &fakeDialer{
+			t:             t,
+			url:           url,
+			exceptedURL:   expectedURL,
+			exceptedError: exceptedError,
+		}
+	}
+}
+
+type fakeDialer struct {
+	t   *testing.T
+	url *url.URL
+
+	exceptedURL   *url.URL
+	exceptedError error
+}
+
+type fakeConnection struct {
+	closed    bool
+	closeChan chan bool
+}
+
+func (f *fakeDialer) Dial(protocols ...string) (httpstream.Connection, string, error) {
+	if f.exceptedURL != nil {
+		assert.DeepEqual(f.t, f.exceptedURL, f.url)
+	}
+	if f.exceptedError != nil {
+		return nil, "", f.exceptedError
+	}
+	return &fakeConnection{
+		closed:    false,
+		closeChan: make(chan bool),
+	}, "", nil
+}
+
+func (f *fakeConnection) CreateStream(headers http.Header) (httpstream.Stream, error) {
+	return nil, nil
+}
+
+func (f *fakeConnection) Close() error {
+	if !f.closed {
+		f.closed = true
+		close(f.closeChan)
+	}
+	return nil
+}
+
+func (f *fakeConnection) CloseChan() <-chan bool {
+	return f.closeChan
+
+}
+func (f *fakeConnection) SetIdleTimeout(timeout time.Duration) {
+	// no-op
+}
+
+func TestProfileDownloader_connect(t *testing.T) {
+	t.Run("connect success", func(t *testing.T) {
+		d := &Downloader{
+			podName:   "pod-1",
+			namespace: "mynamespace",
+			readyCh:   make(chan struct{}),
+			errorCh:   make(chan error),
+			client:    http.DefaultClient,
+			localPort: 12345,
+			restConfig: &rest.Config{
+				Host: "http://localhost:12345",
+			},
+			dialerFunc: fakeDialerFunc(t,
+				&url.URL{
+					Scheme: "http",
+					Host:   "localhost:12345",
+					Path:   "/api/v1/namespaces/mynamespace/pods/pod-1/portforward",
+				},
+				nil),
+		}
+		ch := make(chan struct{})
+		err := d.connect(ch)
+		assert.NilError(t, err)
+		// should be ready
+		<-d.readyCh
+		close(ch)
+		err = <-d.errorCh
+		assert.NilError(t, err)
+	})
+
+	t.Run("dial error", func(t *testing.T) {
+		exceptDialError := errors.New("dial error")
+		d := &Downloader{
+			podName:   "pod-1",
+			namespace: "mynamespace",
+			readyCh:   make(chan struct{}),
+			errorCh:   make(chan error),
+			client:    http.DefaultClient,
+			localPort: 12345,
+			restConfig: &rest.Config{
+				Host: "http://localhost:12345",
+			},
+			dialerFunc: fakeDialerFunc(t,
+				&url.URL{
+					Scheme: "http",
+					Host:   "localhost:12345",
+					Path:   "/api/v1/namespaces/mynamespace/pods/pod-1/portforward",
+				},
+				exceptDialError),
+		}
+		ch := make(chan struct{})
+		err := d.connect(ch)
+		assert.NilError(t, err)
+		go func() {
+			select {
+			case <-d.readyCh:
+				t.Error("ready chan should not be closed")
+			case <-ch:
+			}
+		}()
+		// should receive error before we close ch
+		err = <-d.errorCh
+		assert.ErrorContains(t, err, exceptDialError.Error())
+		close(ch)
+	})
+}
 
 func TestProfileDownload(t *testing.T) {
 	t.Run("download heap profile success", func(t *testing.T) {
@@ -48,7 +178,7 @@ func TestProfileDownload(t *testing.T) {
 
 		d := &Downloader{
 			readyCh:   make(chan struct{}),
-			stopCh:    make(chan struct{}),
+			errorCh:   make(chan error),
 			client:    http.DefaultClient,
 			localPort: uint32(port),
 		}
@@ -84,7 +214,7 @@ func TestProfileDownload(t *testing.T) {
 
 		d := &Downloader{
 			readyCh:   make(chan struct{}),
-			stopCh:    make(chan struct{}),
+			errorCh:   make(chan error),
 			client:    http.DefaultClient,
 			localPort: uint32(port),
 		}
@@ -103,7 +233,7 @@ func TestProfileDownload(t *testing.T) {
 
 		d := &Downloader{
 			readyCh: make(chan struct{}),
-			stopCh:  make(chan struct{}),
+			errorCh: make(chan error),
 			client:  http.DefaultClient,
 		}
 		errChan := make(chan error)
@@ -124,10 +254,10 @@ func TestProfileDownload(t *testing.T) {
 		assert.ErrorContains(t, err, "unsupported profiling type")
 	})
 
-	t.Run("request canceled while download is not started", func(t *testing.T) {
+	t.Run("error occoured while download is not started", func(t *testing.T) {
 		d := &Downloader{
 			readyCh: make(chan struct{}),
-			stopCh:  make(chan struct{}),
+			errorCh: make(chan error),
 			client:  http.DefaultClient,
 		}
 		errChan := make(chan error)
@@ -136,10 +266,12 @@ func TestProfileDownload(t *testing.T) {
 		go func() {
 			errChan <- d.Download(ProfileTypeHeap, output)
 		}()
-		close(d.stopCh)
+
+		e := fmt.Errorf("dummy connection error")
+		d.errorCh <- e
 		var err error
 		err = <-errChan
-		assert.ErrorContains(t, err, "download failed")
+		assert.Check(t, errors.Is(err, e))
 	})
 
 	t.Run("request canceled while download is started", func(t *testing.T) {
@@ -163,7 +295,7 @@ func TestProfileDownload(t *testing.T) {
 
 		d := &Downloader{
 			readyCh:   make(chan struct{}),
-			stopCh:    make(chan struct{}),
+			errorCh:   make(chan error),
 			client:    http.DefaultClient,
 			localPort: uint32(port),
 		}
@@ -174,7 +306,7 @@ func TestProfileDownload(t *testing.T) {
 		}()
 		close(d.readyCh)
 		<-time.After(1 * time.Second)
-		close(d.stopCh)
+		close(d.errorCh)
 
 		err = <-errChan
 		assert.ErrorContains(t, err, "context canceled")

@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
@@ -67,10 +68,11 @@ type Downloader struct {
 	podName    string
 	namespace  string
 	readyCh    chan struct{} // closed by portforward.ForwardPorts() when connection is ready
-	stopCh     chan struct{} // our private chan which can be closed by us safely
+	errorCh    chan error
 	restConfig *rest.Config
 	localPort  uint32
 	client     *http.Client
+	dialerFunc func(upgrader spdy.Upgrader, client *http.Client, method string, url *url.URL) httpstream.Dialer
 }
 
 // ProfileDownloader interface for profile downloader
@@ -93,10 +95,11 @@ func NewDownloader(cfgGetter RestConfigGetter, podName, namespace string, endCh 
 		podName:    podName,
 		namespace:  namespace,
 		readyCh:    make(chan struct{}),
-		stopCh:     make(chan struct{}),
+		errorCh:    make(chan error),
 		restConfig: cfg,
 		localPort:  18008,
 		client:     http.DefaultClient,
+		dialerFunc: spdy.NewDialer,
 	}
 	err = d.connect(endCh)
 	if err != nil {
@@ -121,19 +124,16 @@ func (d *Downloader) connect(endCh <-chan struct{}) error {
 		Scheme: u.Scheme,
 		Path:   path,
 	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
+	dialer := d.dialerFunc(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
 	out := &bytes.Buffer{}
 	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", d.localPort, pprofPort)}, endCh, d.readyCh, out, out)
 	if err != nil {
 		return err
 	}
 	go func() {
-		defer close(d.stopCh)
-		err := fw.ForwardPorts()
+		defer close(d.errorCh)
 		// if the func ForwardPorts() returns, the connection should not be available.
-		if err != nil {
-			// TODO: Log for error?
-		}
+		d.errorCh <- fw.ForwardPorts()
 	}()
 	return nil
 }
@@ -159,7 +159,7 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			// request succeeded
 			case <-ctx.Done():
 				break
-			case <-d.stopCh:
+			case <-d.errorCh:
 				cancel()
 			}
 		}()
@@ -193,7 +193,7 @@ func (d *Downloader) Download(t ProfileType, output io.Writer, options ...Downlo
 			return err
 		}
 		return nil
-	case <-d.stopCh:
-		return fmt.Errorf("download failed")
+	case err := <-d.errorCh:
+		return err
 	}
 }
