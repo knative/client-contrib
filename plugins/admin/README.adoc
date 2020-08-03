@@ -120,7 +120,7 @@ Use "kn admin autoscaling [command] --help" for more information about a comman
 #### `kn admin profiling`
 
 ----
-Enable Knative components profiling and download profile data
+Enable Knative Serving components profiling and download profile data
 
 Usage:
   kn admin profiling [flags]
@@ -147,13 +147,13 @@ Examples:
 
 
 Flags:
-      --all              Download all profile data
+      --all              Download all profiling data
       --block            Download go routine blocking data
-      --cpu string       Download cpu profile data, you can specify a profile data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
-      --disable          Disable Knative profiling
-      --enable           Enable Knative profiling
+      --cpu string       Download cpu profiling data, you can specify a profiling data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
+      --disable          Disable Knative Serving profiling
+      --enable           Enable Knative Serving profiling
       --goroutine        Download stack traces of all current goroutines data
-      --heap             Download heap profile data
+      --heap             Download heap profiling data
   -h, --help             help for profiling
       --mem-allocs       Download memory allocations data
       --mutex            Download holders of contended mutexes data
