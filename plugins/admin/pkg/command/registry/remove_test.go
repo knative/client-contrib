@@ -33,13 +33,12 @@ import (
 func TestNewRegistryRmCommand(t *testing.T) {
 	t.Run("incompleted args for registry remove", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
-		rp := &registryAdminParams{
-			AdminParams: &pkg.AdminParams{
-				ClientSet: client,
-			},
+
+		p := &pkg.AdminParams{
+			ClientSet: client,
 		}
 
-		cmd := NewRegistryRmCommand(rp)
+		cmd := NewRegistryRmCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
 		assert.ErrorContains(t, err, "requires the registry username")
@@ -50,13 +49,11 @@ func TestNewRegistryRmCommand(t *testing.T) {
 
 	t.Run("registry not found", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
-		rp := &registryAdminParams{
-			AdminParams: &pkg.AdminParams{
-				ClientSet: client,
-			},
-		}
 
-		cmd := NewRegistryRmCommand(rp)
+		p := &pkg.AdminParams{
+			ClientSet: client,
+		}
+		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "No registry found"), "unexpected output: %s", o)
@@ -101,17 +98,14 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			},
 		}
 		client := k8sfake.NewSimpleClientset(&sa, &secret)
-		rp := &registryAdminParams{
-			AdminParams: &pkg.AdminParams{
-				ClientSet: client,
-			},
+
+		p := &pkg.AdminParams{
+			ClientSet: client,
 		}
 
-		cmd := NewRegistryRmCommand(rp)
+		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(o, "No namespace specified, using 'default' namespace"), "unexpected output: %s", o)
-		assert.Check(t, strings.Contains(o, "No serviceaccount specified, using 'default' serviceaccount"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'default' in namespace 'default' is updated"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'default' is deleted"), "unexpected output: %s", o)
 
@@ -173,19 +167,14 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			},
 		}
 		client := k8sfake.NewSimpleClientset(&ns, &sa, &secret)
-		rp := &registryAdminParams{
-			AdminParams: &pkg.AdminParams{
-				ClientSet: client,
-			},
-			Namespace:      "custom-namespace",
-			ServiceAccount: "custom-serviceaccount",
+
+		p := &pkg.AdminParams{
+			ClientSet: client,
 		}
 
-		cmd := NewRegistryRmCommand(rp)
-		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
+		cmd := NewRegistryRmCommand(p)
+		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io", "--namespace", "custom-namespace", "--serviceaccount", "custom-serviceaccount")
 		assert.NilError(t, err)
-		assert.Check(t, !strings.Contains(o, "No namespace specified, using default namespace"), "unexpected output: %s", o)
-		assert.Check(t, !strings.Contains(o, "No serviceaccount specified, using 'default' serviceaccount"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'custom-serviceaccount' in namespace 'custom-namespace' is updated"), "unexpected output: %s", o)
 		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'custom-namespace' is deleted"), "unexpected output: %s", o)
 

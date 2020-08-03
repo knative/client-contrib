@@ -26,14 +26,18 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 
+	"knative.dev/client-contrib/plugins/admin/pkg"
+	"knative.dev/client/pkg/kn/commands"
+
 	"github.com/spf13/cobra"
 )
 
 var username string
 var server string
+var serviceaccount string
 
 // NewRegistryRmCommand represents the remove command
-func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
+func NewRegistryRmCommand(p *pkg.AdminParams) *cobra.Command {
 	var registryRmCmd = &cobra.Command{
 		Use:     "remove",
 		Aliases: []string{"rm"},
@@ -56,16 +60,12 @@ func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if p.Namespace == "" {
-				cmd.Print("No namespace specified, using 'default' namespace\n")
-				p.Namespace = "default"
-			}
-			if p.ServiceAccount == "" {
-				cmd.Print("No serviceaccount specified, using 'default' serviceaccount\n")
-				p.ServiceAccount = "default"
+			namespace := cmd.Flag("namespace").Value.String()
+			if namespace == "" {
+				namespace = "default"
 			}
 			// get all credential secrets which have the label managed-by=kn-admin-registry
-			secrets, err := p.AdminParams.ClientSet.CoreV1().Secrets(p.Namespace).List(metav1.ListOptions{
+			secrets, err := p.ClientSet.CoreV1().Secrets(namespace).List(metav1.ListOptions{
 				LabelSelector: labels.SelectorFromSet(AdminRegistryLabels).String(),
 			})
 			if err != nil {
@@ -91,9 +91,9 @@ func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
 				return nil
 			}
 
-			sa, err := p.AdminParams.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Get(p.ServiceAccount, metav1.GetOptions{})
+			sa, err := p.ClientSet.CoreV1().ServiceAccounts(namespace).Get(serviceaccount, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get serviceaccount '%s' in namespace '%s': %v", p.ServiceAccount, p.Namespace, err)
+				return fmt.Errorf("failed to get serviceaccount '%s' in namespace '%s': %v", serviceaccount, namespace, err)
 			}
 
 			desiredSa := sa.DeepCopy()
@@ -107,14 +107,14 @@ func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
 			}
 
 			desiredSa.ImagePullSecrets = imagePullSecrets
-			_, err = p.AdminParams.ClientSet.CoreV1().ServiceAccounts(p.Namespace).Update(desiredSa)
+			_, err = p.ClientSet.CoreV1().ServiceAccounts(namespace).Update(desiredSa)
 			if err != nil {
-				return fmt.Errorf("failed to remove registry secret in serviceaccount '%s' in namespace '%s': %v", p.ServiceAccount, p.Namespace, err)
+				return fmt.Errorf("failed to remove registry secret in serviceaccount '%s' in namespace '%s': %v", serviceaccount, namespace, err)
 			}
 			cmd.Printf("ImagePullSecrets of serviceaccount '%s' in namespace '%s' is updated\n", desiredSa.Name, desiredSa.Namespace)
 
 			deleteSecretsErrCh := make(chan error, len(secretsMap))
-			deleteSecrets(cmd, p.AdminParams.ClientSet, secretsMap, deleteSecretsErrCh)
+			deleteSecrets(cmd, p.ClientSet, secretsMap, deleteSecretsErrCh)
 
 			var deleteSecretsErr error
 			select {
@@ -133,6 +133,8 @@ func NewRegistryRmCommand(p *registryAdminParams) *cobra.Command {
 		},
 	}
 
+	commands.AddNamespaceFlags(registryRmCmd.Flags(), false)
+	registryRmCmd.Flags().StringVar(&serviceaccount, "serviceaccount", "default", "the service account to save imagePullSecrets")
 	registryRmCmd.Flags().StringVar(&username, "username", "", "registry username")
 	registryRmCmd.MarkFlagRequired("username")
 	registryRmCmd.Flags().StringVar(&server, "server", "", "registry address")

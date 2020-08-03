@@ -47,26 +47,15 @@ type registryCred struct {
 // Auths is a map of docker credentials indexed by server url
 type Auths map[string]registryCred
 
-type registryAdminParams struct {
-	AdminParams    *pkg.AdminParams
-	Namespace      string
-	ServiceAccount string
-}
-
 // NewPrivateRegistryCmd represents the privateRegistry command
 func NewPrivateRegistryCmd(p *pkg.AdminParams) *cobra.Command {
-	registryAdminParams := &registryAdminParams{
-		AdminParams: p,
-	}
 	var privateRegistryCmd = &cobra.Command{
 		Use:   "registry",
 		Short: "Manage registry",
 		Long:  `Manage registry used by Knative service deployment`,
 	}
-	privateRegistryCmd.PersistentFlags().StringVarP(&registryAdminParams.Namespace, "namespace", "n", "", "the namespace to manage registries")
-	privateRegistryCmd.PersistentFlags().StringVarP(&registryAdminParams.ServiceAccount, "serviceaccount", "s", "", "the serviceaccount to save imagePullSecrets")
-	privateRegistryCmd.AddCommand(NewRegistryAddCommand(registryAdminParams))
-	privateRegistryCmd.AddCommand(NewRegistryRmCommand(registryAdminParams))
+	privateRegistryCmd.AddCommand(NewRegistryAddCommand(p))
+	privateRegistryCmd.AddCommand(NewRegistryRmCommand(p))
 	privateRegistryCmd.InitDefaultHelpCmd()
 	return privateRegistryCmd
 }
