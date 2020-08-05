@@ -148,7 +148,7 @@ func TestNewProfilingCommand(t *testing.T) {
 		}
 		for _, args := range argsList {
 			_, err := testutil.ExecuteCommand(newProfilingCommand(), args...)
-			assert.ErrorContains(t, err, "requires '--all' or a specific profile type flag", err)
+			assert.ErrorContains(t, err, "requires '--all' or a specific profiling type flag", err)
 		}
 	})
 
@@ -251,7 +251,7 @@ func TestNewProfilingCommand(t *testing.T) {
 		cmd, client := newProfilingCommandWith(cm)
 		out, err := testutil.ExecuteCommand(cmd, "--enable")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(out, "Knative profiling is enabled"))
+		assert.Check(t, strings.Contains(out, "Knative Serving profiling is enabled"))
 
 		newCm, err := client.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
 		assert.NilError(t, err)
@@ -266,7 +266,7 @@ func TestNewProfilingCommand(t *testing.T) {
 		cmd, client := newProfilingCommandWith(cm)
 		out, err := testutil.ExecuteCommand(cmd, "--disable")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(out, "Knative profiling is disabled"))
+		assert.Check(t, strings.Contains(out, "Knative Serving profiling is disabled"))
 
 		newCm, err := client.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
 		assert.NilError(t, err)
@@ -397,7 +397,7 @@ func TestNewProfilingCommand(t *testing.T) {
 		assert.ErrorContains(t, err, "error downloading data", err)
 	})
 
-	t.Run("successfully downloaded profile data for a specific pod target", func(t *testing.T) {
+	t.Run("successfully downloaded profiling data for a specific pod target", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
@@ -428,11 +428,11 @@ func TestNewProfilingCommand(t *testing.T) {
 
 		out, err := testutil.ExecuteCommand(cmd, "--target", podName, "--cpu", "10")
 		assert.NilError(t, err)
-		expectedMsg := fmt.Sprintf("Saving 10 second(s) cpu profile data to %s_cpu", filepath.Join(cwd, podName))
-		assert.Check(t, strings.Contains(out, expectedMsg), "expected saving cpu profile data output for"+podName)
+		expectedMsg := fmt.Sprintf("Saving 10 second(s) cpu profiling data to %s_cpu", filepath.Join(cwd, podName))
+		assert.Check(t, strings.Contains(out, expectedMsg), "expected saving cpu profiling data output for"+podName)
 	})
 
-	t.Run("successfully downloaded profile data for a knative component", func(t *testing.T) {
+	t.Run("successfully downloaded profiling data for a knative component", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
@@ -467,12 +467,12 @@ func TestNewProfilingCommand(t *testing.T) {
 		out, err := testutil.ExecuteCommand(cmd, "--target", "activator", "--heap")
 		assert.NilError(t, err)
 		for _, name := range podNames {
-			expectedMsg := fmt.Sprintf("Saving heap profile data to %s_heap", filepath.Join(cwd, name))
-			assert.Check(t, strings.Contains(out, expectedMsg), "expected saving heap profile data output for "+name)
+			expectedMsg := fmt.Sprintf("Saving heap profiling data to %s_heap", filepath.Join(cwd, name))
+			assert.Check(t, strings.Contains(out, expectedMsg), "expected saving heap profiling data output for "+name)
 		}
 	})
 
-	t.Run("successfully downloaded multiple profile types data", func(t *testing.T) {
+	t.Run("successfully downloaded multiple profiling types data", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
@@ -504,12 +504,12 @@ func TestNewProfilingCommand(t *testing.T) {
 		out, err := testutil.ExecuteCommand(cmd, "--target", podName, "--cpu", "8s", "--block", "--mutex")
 		assert.NilError(t, err)
 		saveFile := filepath.Join(cwd, podName)
-		assert.Check(t, strings.Contains(out, "Saving 8 second(s) cpu profile data to "+saveFile+"_cpu"), "expected saving cpu profile data output for "+podName)
-		assert.Check(t, strings.Contains(out, "Saving block profile data to "+saveFile+"_block"), "expected saving block profile data output for "+podName)
-		assert.Check(t, strings.Contains(out, "Saving mutex profile data to "+saveFile+"_mutex"), "expected saving mutex profile data output for "+podName)
+		assert.Check(t, strings.Contains(out, "Saving 8 second(s) cpu profiling data to "+saveFile+"_cpu"), "expected saving cpu profiling data output for "+podName)
+		assert.Check(t, strings.Contains(out, "Saving block profiling data to "+saveFile+"_block"), "expected saving block profiling data output for "+podName)
+		assert.Check(t, strings.Contains(out, "Saving mutex profiling data to "+saveFile+"_mutex"), "expected saving mutex profiling data output for "+podName)
 	})
 
-	t.Run("successfully downloaded all profile types data", func(t *testing.T) {
+	t.Run("successfully downloaded all profiling types data", func(t *testing.T) {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
@@ -542,17 +542,17 @@ func TestNewProfilingCommand(t *testing.T) {
 		assert.NilError(t, err)
 		saveFile := filepath.Join(cwd, podName)
 		expectedMsgs := map[string]string{
-			"cpu":           fmt.Sprintf("Saving %d second(s) cpu profile data to %s_cpu", defaultDuration, saveFile),
-			"heap":          fmt.Sprintf("Saving heap profile data to %s_heap", saveFile),
-			"block":         fmt.Sprintf("Saving block profile data to %s_block", saveFile),
-			"trace":         fmt.Sprintf("Saving %d second(s) trace profile data to %s_trace", defaultDuration, saveFile),
-			"mem-allocs":    fmt.Sprintf("Saving mem-allocs profile data to %s_mem-allocs", saveFile),
-			"mutex":         fmt.Sprintf("Saving mutex profile data to %s_mutex", saveFile),
-			"goroutine":     fmt.Sprintf("Saving goroutine profile data to %s_goroutine", saveFile),
-			"thread-create": fmt.Sprintf("Saving thread-create profile data to %s_thread-create", saveFile),
+			"cpu":           fmt.Sprintf("Saving %d second(s) cpu profiling data to %s_cpu", defaultDuration, saveFile),
+			"heap":          fmt.Sprintf("Saving heap profiling data to %s_heap", saveFile),
+			"block":         fmt.Sprintf("Saving block profiling data to %s_block", saveFile),
+			"trace":         fmt.Sprintf("Saving %d second(s) trace profiling data to %s_trace", defaultDuration, saveFile),
+			"mem-allocs":    fmt.Sprintf("Saving mem-allocs profiling data to %s_mem-allocs", saveFile),
+			"mutex":         fmt.Sprintf("Saving mutex profiling data to %s_mutex", saveFile),
+			"goroutine":     fmt.Sprintf("Saving goroutine profiling data to %s_goroutine", saveFile),
+			"thread-create": fmt.Sprintf("Saving thread-create profiling data to %s_thread-create", saveFile),
 		}
 		for k, v := range expectedMsgs {
-			assert.Check(t, strings.Contains(out, v), fmt.Sprintf("expected saving %s profile data output for %s", k, podName))
+			assert.Check(t, strings.Contains(out, v), fmt.Sprintf("expected saving %s profiling data output for %s", k, podName))
 		}
 	})
 }

@@ -33,10 +33,10 @@ import (
 
 const (
 	profilingExample = `
-  # To enable profiling
+  # To enable Knative Serving profiling
   kn admin profiling --enable
 
-  # To download heap profile data of autoscaler
+  # To download heap profiling data of autoscaler
   kn admin profiling --target autoscaler --heap
 
   # To download 2 minutes execution trace data of networking-istio
@@ -45,15 +45,15 @@ const (
   # To download go routing block and memory allocations data of activator and save them to /tmp
   kn admin profiling --target activator --block --mem-allocs --save-to /tmp
 
-  # To download all available profile data for specified pod activator-5979f56548
+  # To download all available profiling data for specified pod activator-5979f56548
   kn admin profiling --target activator-5979f56548 --all
 `
 
-	targetFlagUsgae       = "The profiling target. It can be a Knative component name or a specific pod name, e.g: 'activator' or 'activator-586d468c99-w59cm'"
-	saveToFlagUsage       = "The path to save the downloaded profile data, if not speicifed, the data will be saved in current working folder"
-	allFlagUsage          = "Download all available profile data"
-	cpuFlagUsage          = "Download cpu profile data, you can specify a profile data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute"
-	heapFlagUsage         = "Download heap profile data"
+	targetFlagUsgae       = "The profiling target. It can be a Knative Serving component name or a specific pod name, e.g: 'activator' or 'activator-586d468c99-w59cm'"
+	saveToFlagUsage       = "The path to save the downloaded profiling data, if not speicifed, the data will be saved in current working folder"
+	allFlagUsage          = "Download all available profiling data"
+	cpuFlagUsage          = "Download cpu profiling data, you can specify a profiling data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute"
+	heapFlagUsage         = "Download heap profiling data"
 	blockFlagUsage        = "Download go routine blocking data"
 	traceFlagUsage        = "Download execution trace data, you can specify a trace data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute"
 	memAllocsFlagUsage    = "Download memory allocations data"
@@ -108,8 +108,8 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 	var profilingCmd = &cobra.Command{
 		Use:     "profiling",
 		Aliases: []string{"prof"},
-		Short:   "Profiling Knative components",
-		Long:    `Enable Knative components profiling and download profile data`,
+		Short:   "Profiling Knative Serving components",
+		Long:    `Enable Knative Serving components profiling and download profiling data`,
 		Example: profilingExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
@@ -145,7 +145,7 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 
 			// --profile-type is needed
 			if !isProfileTypeSet && !isAllProfilesSet && (isTargetSet || isSaveToSet) {
-				return fmt.Errorf("requires '--all' or a specific profile type flag")
+				return fmt.Errorf("requires '--all' or a specific profiling type flag")
 			}
 			return nil
 		},
@@ -164,8 +164,8 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 	}
 
 	flags := profilingCmd.Flags()
-	flags.BoolVar(&pflags.enable, "enable", false, "Enable Knative profiling")
-	flags.BoolVar(&pflags.disable, "disable", false, "Disable Knative profiling")
+	flags.BoolVar(&pflags.enable, "enable", false, "Enable Knative Serving profiling")
+	flags.BoolVar(&pflags.disable, "disable", false, "Disable Knative Serving profiling")
 	flags.StringVarP(&pflags.target, "target", "t", "", targetFlagUsgae)
 	flags.StringVarP(&pflags.saveTo, "save-to", "s", "", saveToFlagUsage)
 	flags.BoolVar(&pflags.allProfiles, "all", false, allFlagUsage)
@@ -201,9 +201,9 @@ func configProfiling(c kubernetes.Interface, cmd *cobra.Command, enable bool) er
 	}
 
 	if enable {
-		cmd.Println("Knative profiling is enabled")
+		cmd.Println("Knative Serving profiling is enabled")
 	} else {
-		cmd.Println("Knative profiling is disabled")
+		cmd.Println("Knative Serving profiling is disabled")
 	}
 	return nil
 }
@@ -360,7 +360,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 	if pflags.saveTo == "" {
 		pflags.saveTo, err = os.Getwd()
 		if err != nil {
-			return fmt.Errorf("fail to get current working folder to save profile data: %+v", err)
+			return fmt.Errorf("fail to get current working folder to save profiling data: %+v", err)
 		}
 	} else {
 		stat, err := os.Stat(pflags.saveTo)
@@ -412,10 +412,10 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 		}
 	}
 
-	// iterates pods to download specified profile data
+	// iterates pods to download specified profiling data
 	for _, pod := range pods.Items {
 		err = func() error {
-			cmd.Printf("Starting to download profile data for pod %s...\n", pod.Name)
+			cmd.Printf("Starting to download profiling data for pod %s...\n", pod.Name)
 			end := make(chan struct{})
 			downloader, err := newDownloaderFunc(p, pod.Name, knNamespace, end)
 			if err != nil {
@@ -441,7 +441,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 					return err
 				}
 
-				cmd.Printf("Saving %s%s profile data to %s\n", duration, k, dataFilePath)
+				cmd.Printf("Saving %s%s profiling data to %s\n", duration, k, dataFilePath)
 				err = downloader.Download(v.profileType, f, options...)
 				f.Close()
 				if err != nil {
