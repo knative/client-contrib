@@ -82,7 +82,7 @@ github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
-# github.com/spf13/cobra v0.0.5
+# github.com/spf13/cobra v0.0.6
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.0.0
@@ -201,6 +201,7 @@ k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.17.4
 ## explicit
+k8s.io/apimachinery/pkg/api/apitesting/fuzzer
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -451,6 +452,7 @@ k8s.io/client-go/tools/clientcmd/api
 k8s.io/client-go/tools/clientcmd/api/latest
 k8s.io/client-go/tools/clientcmd/api/v1
 k8s.io/client-go/tools/metrics
+k8s.io/client-go/tools/pager
 k8s.io/client-go/tools/portforward
 k8s.io/client-go/tools/reference
 k8s.io/client-go/transport
@@ -472,6 +474,11 @@ k8s.io/utils/integer
 k8s.io/utils/trace
 # knative.dev/client v0.14.0
 ## explicit
+knative.dev/client/lib/test
+knative.dev/client/pkg/dynamic
+knative.dev/client/pkg/errors
+knative.dev/client/pkg/eventing/v1alpha1
+knative.dev/client/pkg/kn/commands
 knative.dev/client/pkg/kn/flags
 knative.dev/client/pkg/printers
 knative.dev/client/pkg/serving

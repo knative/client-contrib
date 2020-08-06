@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	testcommon "github.com/maximilien/kn-source-pkg/test/e2e"
@@ -81,6 +82,13 @@ func TestKnAdminPlugin(t *testing.T) {
 
 	t.Log("test kn admin registry subcommand")
 	e2eTest.knAdminRegistry(t, r)
+	err = e2eTest.backupConfigMap("config-observability")
+	assert.NilError(t, err)
+
+	t.Log("test kn admin profiling subcommand")
+	e2eTest.knAdminProfiling(t, r)
+	err = e2eTest.restoreConfigMap("config-observability")
+	assert.NilError(t, err)
 
 	err = e2eTest.it.KnPlugin().Uninstall()
 	assert.NilError(t, err)
@@ -133,4 +141,22 @@ func (et *e2eTest) knAdminRegistry(t *testing.T, r *test.KnRunResultCollector) {
 	r.AssertNoError(out)
 	out = et.kn.Run(pluginName, "registry", "remove", "--username", "custom-user", "--server", "dummy.test.io")
 	r.AssertNoError(out)
+}
+
+func (et *e2eTest) knAdminProfiling(t *testing.T, r *test.KnRunResultCollector) {
+	out := et.kn.Run(pluginName, "profiling", "--enable")
+	r.AssertNoError(out)
+	assert.Equal(t, "Knative Serving profiling is enabled\n", out.Stdout)
+
+	out = et.kn.Run(pluginName, "profiling", "--heap", "--target", "controller")
+	r.AssertNoError(out)
+	assert.Check(t, strings.Contains(out.Stdout, "Saving heap profiling data to"))
+
+	out = et.kn.Run(pluginName, "profiling", "--cpu", "5s", "--target", "controller")
+	r.AssertNoError(out)
+	assert.Check(t, strings.Contains(out.Stdout, "Saving 5 second(s) cpu profiling data to"))
+
+	out = et.kn.Run(pluginName, "profiling", "--disable")
+	r.AssertNoError(out)
+	assert.Equal(t, "Knative Serving profiling is disabled\n", out.Stdout)
 }
