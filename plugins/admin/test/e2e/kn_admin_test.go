@@ -79,6 +79,9 @@ func TestKnAdminPlugin(t *testing.T) {
 	err = e2eTest.restoreConfigMap("config-domain")
 	assert.NilError(t, err)
 
+	t.Log("test kn admin registry subcommand")
+	e2eTest.knAdminRegistry(t, r)
+
 	err = e2eTest.it.KnPlugin().Uninstall()
 	assert.NilError(t, err)
 }
@@ -122,5 +125,12 @@ func (et *e2eTest) knAdminDomain(t *testing.T, r *test.KnRunResultCollector) {
 	out = et.kn.Run(pluginName, "domain", "set", "--custom-domain", domain, "--selector", "app=v1")
 	r.AssertNoError(out)
 	out = et.kn.Run(pluginName, "domain", "unset", "--custom-domain", domain)
+	r.AssertNoError(out)
+}
+
+func (et *e2eTest) knAdminRegistry(t *testing.T, r *test.KnRunResultCollector) {
+	out := et.kn.Run(pluginName, "registry", "add", "--username", "custom-user", "--password", "dummy", "--server", "dummy.test.io")
+	r.AssertNoError(out)
+	out = et.kn.Run(pluginName, "registry", "remove", "--username", "custom-user", "--server", "dummy.test.io")
 	r.AssertNoError(out)
 }

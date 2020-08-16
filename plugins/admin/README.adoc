@@ -79,18 +79,19 @@ Usage:
   kn admin registry [command]
 
 Available Commands:
-  add         add registry with credentials
+  add         Add registry with credentials
   help        Help about any command
   remove      Remove registry settings
 
 Flags:
-  -h, --help   help for registry
+  -h, --help                    help for registry
+  -n, --namespace string        the namespace to manage registries
+  -s, --serviceaccount string   the serviceaccount to save imagePullSecrets
 
 Global Flags:
       --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
 
 Use "kn admin registry [command] --help" for more information about a command.
-
 ----
 
 #### `kn admin autoscaling`
@@ -150,9 +151,13 @@ Unset Knative route domain mydomain.com
 =====
 -----
 $ kn admin registry add \
+  --secret=[SECRET_NAME] \
   --server=[REGISTRY_SERVER_URL] \
+  --email=[REGISTRY_EMAIL] \
   --username=[REGISTRY_USER] \
-  --password=[REGISTRY_PASSWORD]
+  --password=[REGISTRY_PASSWORD] \
+  --namespace=[NAMESPACE] \
+  --serviceaccount=[SERVICE_ACCOUNT]
 -----
 =====
 
@@ -161,7 +166,9 @@ $ kn admin registry add \
 -----
 $ kn admin registry remove \
   --username=[REGISTRY_USER] \
-  --server=[REGISTRY_SERVER_URL]
+  --server=[REGISTRY_SERVER_URL] \
+  --namespace=[NAMESPACE] \
+  --serviceaccount=[SERVICE_ACCOUNT]
 -----
 =====
 

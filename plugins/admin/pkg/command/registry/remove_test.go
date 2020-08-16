@@ -33,10 +33,12 @@ import (
 func TestNewRegistryRmCommand(t *testing.T) {
 	t.Run("incompleted args for registry remove", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
-		p := pkg.AdminParams{
+
+		p := &pkg.AdminParams{
 			ClientSet: client,
 		}
-		cmd := NewRegistryRmCommand(&p)
+
+		cmd := NewRegistryRmCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
 		assert.ErrorContains(t, err, "requires the registry username")
@@ -47,16 +49,17 @@ func TestNewRegistryRmCommand(t *testing.T) {
 
 	t.Run("registry not found", func(t *testing.T) {
 		client := k8sfake.NewSimpleClientset()
-		p := pkg.AdminParams{
+
+		p := &pkg.AdminParams{
 			ClientSet: client,
 		}
-		cmd := NewRegistryRmCommand(&p)
+		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "No registry found"), "unexpected output: %s", o)
 	})
 
-	t.Run("registry removed successfully", func(t *testing.T) {
+	t.Run("registry removed successfully in default namespace using default serviceaccount", func(t *testing.T) {
 		sa := corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "default",
@@ -95,15 +98,16 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			},
 		}
 		client := k8sfake.NewSimpleClientset(&sa, &secret)
-		p := pkg.AdminParams{
+
+		p := &pkg.AdminParams{
 			ClientSet: client,
 		}
 
-		cmd := NewRegistryRmCommand(&p)
+		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
-		assert.Check(t, strings.Contains(o, "ImagePullSecrets of ServiceAccount 'default/default' updated"), "unexpected output: %s", o)
-		assert.Check(t, strings.Contains(o, "Secret 'default/dummy-secret' deleted"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'default' in namespace 'default' is updated"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'default' is deleted"), "unexpected output: %s", o)
 
 		_, err = client.CoreV1().Secrets("default").Get("dummy-secret", metav1.GetOptions{})
 		assert.ErrorContains(t, err, "not found")
@@ -116,8 +120,76 @@ func TestNewRegistryRmCommand(t *testing.T) {
 				break
 			}
 		}
-		assert.Check(t, !isContain, "ImagePullSecrets in the updated ServiceAccount should not contain the removed secret")
+		assert.Check(t, !isContain, "ImagePullSecrets in the updated serviceaccount should not contain the removed secret")
+	})
 
+	t.Run("registry removed successfully in custom namespace using custom serviceaccount", func(t *testing.T) {
+		ns := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "custom-namespace",
+			},
+		}
+		sa := corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "custom-serviceaccount",
+				Namespace: "custom-namespace",
+			},
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				{
+					Name: "dummy-secret",
+				},
+			},
+		}
+
+		dockerCfg := Registry{
+			Auths: Auths{
+				"docker.io": registryCred{
+					Username: "user",
+					Password: "password",
+					Email:    "email",
+				},
+			},
+		}
+
+		j, err := json.Marshal(dockerCfg)
+		assert.NilError(t, err)
+
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dummy-secret",
+				Namespace: "custom-namespace",
+				Labels: map[string]string{
+					pkg.LabelManagedBy: AdminRegistryCmdName,
+				},
+			},
+			Data: map[string][]byte{
+				".dockerconfigjson": j,
+			},
+		}
+		client := k8sfake.NewSimpleClientset(&ns, &sa, &secret)
+
+		p := &pkg.AdminParams{
+			ClientSet: client,
+		}
+
+		cmd := NewRegistryRmCommand(p)
+		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io", "--namespace", "custom-namespace", "--serviceaccount", "custom-serviceaccount")
+		assert.NilError(t, err)
+		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'custom-serviceaccount' in namespace 'custom-namespace' is updated"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'custom-namespace' is deleted"), "unexpected output: %s", o)
+
+		_, err = client.CoreV1().Secrets(ns.Name).Get("dummy-secret", metav1.GetOptions{})
+		assert.ErrorContains(t, err, "not found")
+		saUpdated, err := client.CoreV1().ServiceAccounts(ns.Name).Get("custom-serviceaccount", metav1.GetOptions{})
+		assert.NilError(t, err)
+		isContain := false
+		for _, imagePullSecret := range saUpdated.ImagePullSecrets {
+			if imagePullSecret.Name == "dummy-secret" {
+				isContain = true
+				break
+			}
+		}
+		assert.Check(t, !isContain, "ImagePullSecrets in the updated serviceaccount should not contain the removed secret")
 	})
 
 }

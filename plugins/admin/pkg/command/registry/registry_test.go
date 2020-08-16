@@ -17,16 +17,22 @@ package registry
 import (
 	"testing"
 
+	"knative.dev/client-contrib/plugins/admin/pkg"
+
 	"gotest.tools/assert"
 )
 
 func TestNewPrivateRegistryCmd(t *testing.T) {
-	cmd := NewPrivateRegistryCmd(nil)
+	p := pkg.AdminParams{}
+	cmd := NewPrivateRegistryCmd(&p)
 	assert.Check(t, cmd.HasSubCommands(), "cmd registry should have subcommands")
 	assert.Equal(t, 3, len(cmd.Commands()), "registry command should have 3 subcommands")
 
 	_, _, err := cmd.Find([]string{"add"})
 	assert.NilError(t, err, "registry command should have add subcommand")
+
+	_, _, err = cmd.Find([]string{"remove"})
+	assert.NilError(t, err, "registry command should have help subcommand")
 
 	_, _, err = cmd.Find([]string{"help"})
 	assert.NilError(t, err, "registry command should have help subcommand")

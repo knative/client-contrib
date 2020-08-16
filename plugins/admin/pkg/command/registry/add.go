@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/client-contrib/plugins/admin/pkg"
+	"knative.dev/client/pkg/kn/commands"
 
 	"encoding/json"
 
@@ -28,11 +29,12 @@ import (
 )
 
 type registrycmdFlags struct {
-	Server     string
-	SecretName string
-	Email      string
-	Username   string
-	Password   string
+	Server         string
+	SecretName     string
+	Email          string
+	Username       string
+	Password       string
+	ServiceAccount string
 }
 
 var registryFlags registrycmdFlags
@@ -46,11 +48,13 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 		Example: `
   # add registry with credentials
   kn admin registry add \
-    --secret=[SECRET_NAME]
+    --secret=[SECRET_NAME] \
     --server=[REGISTRY_SERVER_URL] \
     --email=[REGISTRY_EMAIL] \
     --username=[REGISTRY_USER] \
-    --password=[REGISTRY_PASSWORD]`,
+    --password=[REGISTRY_PASSWORD] \
+    --namespace=[NAMESPACE] \
+    --serviceaccount=[SERVICE_ACCOUNT]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if registryFlags.Username == "" {
 				return errors.New("'registry add' requires the registry username to run provided with the --username option")
@@ -64,6 +68,10 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			namespace := cmd.Flag("namespace").Value.String()
+			if namespace == "" {
+				namespace = "default"
+			}
 			dockerCfg := Registry{
 				Auths: Auths{
 					registryFlags.Server: registryCred{
@@ -88,42 +96,44 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 				Type: corev1.SecretTypeDockerConfigJson,
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: fmt.Sprintf("%s-", registryFlags.SecretName),
-					Namespace:    "default",
+					Namespace:    namespace,
 					Labels:       AdminRegistryLabels,
 				},
 				Data: secretData,
 			}
 
-			secret, err = p.ClientSet.CoreV1().Secrets("default").Create(secret)
+			secret, err = p.ClientSet.CoreV1().Secrets(namespace).Create(secret)
 			if err != nil {
-				return fmt.Errorf("failed to create secret: %v", err)
+				return fmt.Errorf("failed to create secret in namespace '%s': %v", namespace, err)
 			}
 
-			defaultSa, err := p.ClientSet.CoreV1().ServiceAccounts("default").Get("default", metav1.GetOptions{})
+			sa, err := p.ClientSet.CoreV1().ServiceAccounts(namespace).Get(registryFlags.ServiceAccount, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to get ServiceAccount: %v", err)
+				return fmt.Errorf("failed to get serviceaccount '%s' in namespace '%s': %v", registryFlags.ServiceAccount, namespace, err)
 			}
-			desiredSa := defaultSa.DeepCopy()
+			desiredSa := sa.DeepCopy()
 			desiredSa.ImagePullSecrets = append(desiredSa.ImagePullSecrets, corev1.LocalObjectReference{
 				Name: secret.Name,
 			})
 
-			_, err = p.ClientSet.CoreV1().ServiceAccounts("default").Update(desiredSa)
+			_, err = p.ClientSet.CoreV1().ServiceAccounts(namespace).Update(desiredSa)
 			if err != nil {
-				return fmt.Errorf("failed to add registry secret in default ServiceAccount: %v", err)
+				return fmt.Errorf("failed to add registry secret in serviceaccount '%s' in namespace '%s': %v", registryFlags.ServiceAccount, namespace, err)
 			}
-			cmd.Printf("Private registry %s added for default ServiceAccount\n", registryFlags.Server)
+			cmd.Printf("Private registry '%s' is added for serviceaccount '%s' in namespace '%s'\n", registryFlags.Server, registryFlags.ServiceAccount, namespace)
 			return nil
 		},
 	}
 
-	registryAddCmd.Flags().StringVar(&registryFlags.SecretName, "secret", "secret-registry", "Registry Secret Name")
-	registryAddCmd.Flags().StringVar(&registryFlags.Server, "server", "", "Registry Address")
+	commands.AddNamespaceFlags(registryAddCmd.Flags(), false)
+	registryAddCmd.Flags().StringVar(&registryFlags.ServiceAccount, "serviceaccount", "default", "the service account to save imagePullSecrets")
+	registryAddCmd.Flags().StringVar(&registryFlags.SecretName, "secret", "registry-secret", "registry secret name")
+	registryAddCmd.Flags().StringVar(&registryFlags.Server, "server", "", "registry address")
 	registryAddCmd.MarkFlagRequired("server")
-	registryAddCmd.Flags().StringVar(&registryFlags.Email, "email", "user@default.email.com", "Registry Email")
-	registryAddCmd.Flags().StringVar(&registryFlags.Username, "username", "", "Registry Username")
+	registryAddCmd.Flags().StringVar(&registryFlags.Email, "email", "user@default.email.com", "registry email")
+	registryAddCmd.Flags().StringVar(&registryFlags.Username, "username", "", "registry username")
 	registryAddCmd.MarkFlagRequired("username")
-	registryAddCmd.Flags().StringVar(&registryFlags.Password, "password", "", "Registry Password")
+	registryAddCmd.Flags().StringVar(&registryFlags.Password, "password", "", "registry password")
 	registryAddCmd.MarkFlagRequired("password")
 
 	registryAddCmd.InitDefaultHelpFlag()
