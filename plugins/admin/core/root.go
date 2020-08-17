@@ -25,12 +25,13 @@ import (
 	"knative.dev/client-contrib/plugins/admin/pkg/command"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/autoscaling"
 	"knative.dev/client-contrib/plugins/admin/pkg/command/domain"
+	"knative.dev/client-contrib/plugins/admin/pkg/command/profiling"
 	private_registry "knative.dev/client-contrib/plugins/admin/pkg/command/registry"
 )
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
+// NewAdminCommand represents the base command when called without any subcommands
 func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	p := &pkg.AdminParams{}
 	p.Initialize()
@@ -46,10 +47,11 @@ func NewAdminCommand(params ...pkg.AdminParams) *cobra.Command {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/kn/plugins/admin.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	rootCmd.SetOut(os.Stdout)
 	rootCmd.AddCommand(domain.NewDomainCmd(p))
 	rootCmd.AddCommand(private_registry.NewPrivateRegistryCmd(p))
 	rootCmd.AddCommand(autoscaling.NewAutoscalingCmd(p))
+	rootCmd.AddCommand(profiling.NewProfilingCommand(p))
 	rootCmd.AddCommand(command.NewVersionCommand())
 
 	// Add default help page if there's unknown command

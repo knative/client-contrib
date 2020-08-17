@@ -116,6 +116,56 @@ Global Flags:
 Use "kn admin autoscaling [command] --help" for more information about a command.
 
 ----
+
+#### `kn admin profiling`
+
+----
+Enable Knative Serving components profiling and download profiling data
+
+Usage:
+  kn admin profiling [flags]
+
+Aliases:
+  profiling, prof
+
+Examples:
+
+  # To enable Knative Serving profiling
+  kn admin profiling --enable
+
+  # To download heap profiling data of autoscaler
+  kn admin profiling --target autoscaler --heap
+
+  # To download 2 minutes execution trace data of networking-istio
+  kn admin profiling --target networking-istio --trace 2m
+
+  # To download go routing block and memory allocations data of activator and save them to /tmp
+  kn admin profiling --target activator --block --mem-allocs --save-to /tmp
+
+  # To download all available profiling data for specified pod activator-5979f56548
+  kn admin profiling --target activator-5979f56548 --all
+
+
+Flags:
+      --all              Download all available profiling data
+      --block            Download go routine blocking data
+      --cpu string       Download cpu profiling data, you can specify a profiling data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
+      --disable          Disable Knative Serving profiling
+      --enable           Enable Knative Serving profiling
+      --goroutine        Download stack traces of all current goroutines data
+      --heap             Download heap profiling data
+  -h, --help             help for profiling
+      --mem-allocs       Download memory allocations data
+      --mutex            Download holders of contended mutexes data
+  -s, --save-to string   The path to save the downloaded profiling data, if not speicifed, the data will be saved in current working folder
+  -t, --target string    The profiling target. It can be a Knative Serving component name or a specific pod name, e.g: 'activator' or 'activator-586d468c99-w59cm'
+      --thread-create    Download stack traces that led to the creation of new OS threads data
+      --trace string     Download execution trace data, you can specify a trace data duration with 's' for second(s), 'm' for minute(s) and 'h' for hour(s), e.g: '1m' for one minute (default "5s")
+
+Global Flags:
+      --config string   config file (default is $HOME/.config/kn/plugins/admin.yaml)
+
+----
 ### Examples
 
 #### As a Knative administrator, I want to update Knative route domain with my custom domain.
@@ -179,5 +229,27 @@ $ kn admin registry remove \
 -----
 $ kn admin autoscaling update --scale-to-zero
 Updated Knative autoscaling config enable-scale-to-zero: true
+-----
+=====
+
+#### As a Knative administrator, I want to enable Knative Serving profiling and download profile data.
+
+.Enable Knative Serving profiling.
+=====
+-----
+$ kn admin profiling --enable
+Knative Serving profiling is enabled
+-----
+=====
+
+.Download 5 seconds cpu profiling data of activator component and save data to /tmp folder
+=====
+-----
+$ kn admin profiling --target activator --cpu 5s --save-to /tmp
+Starting to download profiling data for pod activator-586d468c99-w59cm...
+Saving 5 second(s) cpu profiling data to /tmp/activator-586d468c99-w59cm_cpu_5s_20200725165758
+Forwarding from 127.0.0.1:18008 -> 8008
+Forwarding from [::1]:18008 -> 8008
+Handling connection for 18008
 -----
 =====

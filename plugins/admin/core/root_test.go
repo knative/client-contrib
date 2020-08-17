@@ -33,6 +33,7 @@ func TestNewAdminCommand(t *testing.T) {
 			"domain",
 			"registry",
 			"autoscaling",
+			"profiling",
 		}
 
 		cmd := NewAdminCommand()
