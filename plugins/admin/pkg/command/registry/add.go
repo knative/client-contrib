@@ -68,6 +68,11 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := p.NewKubeClient()
+			if err != nil {
+				return err
+			}
+
 			namespace := cmd.Flag("namespace").Value.String()
 			if namespace == "" {
 				namespace = "default"
@@ -102,12 +107,12 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 				Data: secretData,
 			}
 
-			secret, err = p.ClientSet.CoreV1().Secrets(namespace).Create(secret)
+			secret, err = client.CoreV1().Secrets(namespace).Create(secret)
 			if err != nil {
 				return fmt.Errorf("failed to create secret in namespace '%s': %v", namespace, err)
 			}
 
-			sa, err := p.ClientSet.CoreV1().ServiceAccounts(namespace).Get(registryFlags.ServiceAccount, metav1.GetOptions{})
+			sa, err := client.CoreV1().ServiceAccounts(namespace).Get(registryFlags.ServiceAccount, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get serviceaccount '%s' in namespace '%s': %v", registryFlags.ServiceAccount, namespace, err)
 			}
@@ -116,7 +121,7 @@ func NewRegistryAddCommand(p *pkg.AdminParams) *cobra.Command {
 				Name: secret.Name,
 			})
 
-			_, err = p.ClientSet.CoreV1().ServiceAccounts(namespace).Update(desiredSa)
+			_, err = client.CoreV1().ServiceAccounts(namespace).Update(desiredSa)
 			if err != nil {
 				return fmt.Errorf("failed to add registry secret in serviceaccount '%s' in namespace '%s': %v", registryFlags.ServiceAccount, namespace, err)
 			}

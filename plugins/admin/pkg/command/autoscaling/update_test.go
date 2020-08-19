@@ -21,8 +21,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
-	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
@@ -36,22 +34,16 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 			},
 			Data: make(map[string]string),
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewAutoscalingUpdateCommand(&p)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewAutoscalingUpdateCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd)
 		assert.ErrorContains(t, err, "'autoscaling update' requires flag(s)", err)
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewAutoscalingUpdateCommand(&p)
+		p, _ := testutil.NewTestAdminParams()
+		cmd := NewAutoscalingUpdateCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--scale-to-zero")
 		assert.ErrorContains(t, err, "failed to get ConfigMaps", err)
 	})
@@ -66,11 +58,8 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 				"enable-scale-to-zero": "false",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewAutoscalingUpdateCommand(&p)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewAutoscalingUpdateCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--scale-to-zero")
 		assert.NilError(t, err)
 
@@ -91,11 +80,8 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 				"enable-scale-to-zero": "true",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewAutoscalingUpdateCommand(&p)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewAutoscalingUpdateCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--no-scale-to-zero")
 		assert.NilError(t, err)
 
@@ -116,11 +102,8 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 				"enable-scale-to-zero": "true",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewAutoscalingUpdateCommand(&p)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewAutoscalingUpdateCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--scale-to-zero")
 		assert.NilError(t, err)

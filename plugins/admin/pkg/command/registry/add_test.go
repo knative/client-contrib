@@ -25,21 +25,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 
 	k8srand "k8s.io/apimachinery/pkg/util/rand"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestNewRegistryAddCommand(t *testing.T) {
 
 	t.Run("incompleted args for registry add", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
+		p, _ := testutil.NewTestAdminParams()
 		cmd := NewRegistryAddCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
@@ -53,11 +48,7 @@ func TestNewRegistryAddCommand(t *testing.T) {
 	})
 
 	t.Run("missing default serviceaccount", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
+		p, _ := testutil.NewTestAdminParams()
 		cmd := NewRegistryAddCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.ErrorContains(t, err, "failed to get serviceaccount")
@@ -70,14 +61,10 @@ func TestNewRegistryAddCommand(t *testing.T) {
 				Namespace: "default",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(&sa)
+		p, client := testutil.NewTestAdminParams(&sa)
+		cmd := NewRegistryAddCommand(p)
 		client.PrependReactor("create", "secrets", generateNameReactor)
 
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
-		cmd := NewRegistryAddCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry 'docker.io' is added for serviceaccount 'default' in namespace 'default'"), "unexpected output: %s", o)
@@ -121,14 +108,10 @@ func TestNewRegistryAddCommand(t *testing.T) {
 				Namespace: "custom-namespace",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(&ns, &sa)
+		p, client := testutil.NewTestAdminParams(&ns, &sa)
+		cmd := NewRegistryAddCommand(p)
 		client.PrependReactor("create", "secrets", generateNameReactor)
 
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
-		cmd := NewRegistryAddCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "add", "--username", "user", "--password", "dummy", "--server", "docker.io", "--namespace", "custom-namespace", "--serviceaccount", "custom-serviceaccount")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry 'docker.io' is added for serviceaccount 'custom-serviceaccount' in namespace 'custom-namespace'"), "unexpected output: %s", o)
@@ -173,14 +156,10 @@ func TestNewRegistryAddCommand(t *testing.T) {
 				},
 			},
 		}
-		client := k8sfake.NewSimpleClientset(&sa)
+		p, client := testutil.NewTestAdminParams(&sa)
+		cmd := NewRegistryAddCommand(p)
 		client.PrependReactor("create", "secrets", generateNameReactor)
 
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
-		cmd := NewRegistryAddCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "Private registry 'docker.io' is added for serviceaccount 'default' in namespace 'default'"), "unexpected output: %s", o)

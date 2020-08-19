@@ -42,8 +42,13 @@ func NewDomainUnSetCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := p.NewKubeClient()
+			if err != nil {
+				return err
+			}
+
 			currentCm := &corev1.ConfigMap{}
-			currentCm, err := p.ClientSet.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
+			currentCm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configDomain, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get configmaps: %+v", err)
 			}
@@ -57,7 +62,7 @@ func NewDomainUnSetCommand(p *pkg.AdminParams) *cobra.Command {
 				return fmt.Errorf("Knative route domain %s not found\n", domain)
 			}
 
-			err = utils.UpdateConfigMap(p.ClientSet, desiredCm)
+			err = utils.UpdateConfigMap(client, desiredCm)
 			if err != nil {
 				return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", configDomain, knativeServing, err)
 			}

@@ -20,8 +20,6 @@ import (
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
-	"knative.dev/client-contrib/plugins/admin/pkg"
 
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
@@ -36,22 +34,16 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 			},
 			Data: make(map[string]string),
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewDomainUnSetCommand(&p)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewDomainUnSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "")
 		assert.ErrorContains(t, err, "requires the route name", err)
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewDomainUnSetCommand(&p)
+		p, _ := testutil.NewTestAdminParams()
+		cmd := NewDomainUnSetCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.ErrorContains(t, err, "failed to get configmaps", err)
 	})
@@ -66,11 +58,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 				"dummy.domain": "",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewDomainUnSetCommand(&p)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewDomainUnSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "not-dummy.domain")
 		assert.ErrorContains(t, err, "Knative route domain not-dummy.domain not found", err)
@@ -87,11 +76,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 				"dummy2.domain": "",
 			},
 		}
-		client := k8sfake.NewSimpleClientset(cm)
-		p := pkg.AdminParams{
-			ClientSet: client,
-		}
-		cmd := NewDomainUnSetCommand(&p)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewDomainUnSetCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy1.domain")
 		assert.NilError(t, err)
 

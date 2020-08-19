@@ -55,6 +55,11 @@ func NewAutoscalingUpdateCommand(p *pkg.AdminParams) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := p.NewKubeClient()
+			if err != nil {
+				return err
+			}
+
 			var desiredScaleToZero string
 			if cmd.Flags().Changed("scale-to-zero") {
 				desiredScaleToZero = "true"
@@ -63,14 +68,14 @@ func NewAutoscalingUpdateCommand(p *pkg.AdminParams) *cobra.Command {
 			}
 
 			currentCm := &corev1.ConfigMap{}
-			currentCm, err := p.ClientSet.CoreV1().ConfigMaps(knativeServing).Get(configAutoscaler, metav1.GetOptions{})
+			currentCm, err = client.CoreV1().ConfigMaps(knativeServing).Get(configAutoscaler, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get ConfigMaps: %+v", err)
 			}
 			desiredCm := currentCm.DeepCopy()
 			desiredCm.Data[enableScaleToZero] = desiredScaleToZero
 
-			err = utils.UpdateConfigMap(p.ClientSet, desiredCm)
+			err = utils.UpdateConfigMap(client, desiredCm)
 			if err != nil {
 				return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", configAutoscaler, knativeServing, err)
 			}

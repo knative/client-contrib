@@ -24,29 +24,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srt "k8s.io/apimachinery/pkg/runtime"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
 	k8sfakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	k8stesting "k8s.io/client-go/testing"
-	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
 )
-
-func newProfilingCommand() *cobra.Command {
-	client := k8sfake.NewSimpleClientset(&corev1.ConfigMap{})
-	p := pkg.AdminParams{ClientSet: client}
-	return NewProfilingCommand(&p)
-}
-
-func newProfilingCommandWith(cm *corev1.ConfigMap) (*cobra.Command, *k8sfake.Clientset) {
-	client := k8sfake.NewSimpleClientset(cm)
-	p := pkg.AdminParams{ClientSet: client}
-	return NewProfilingCommand(&p), client
-}
 
 type fakeDownloader struct {
 	error error
@@ -74,14 +59,18 @@ func removeProfileDataFiles(nameFilter string) {
 // TestNewProfilingCommand tests the profiling command
 func TestNewProfilingCommand(t *testing.T) {
 	t.Run("runs profiling without args", func(t *testing.T) {
-		out, err := testutil.ExecuteCommand(newProfilingCommand(), "", "")
+		p, _ := testutil.NewTestAdminParams()
+		cmd := NewProfilingCommand(p)
+		out, err := testutil.ExecuteCommand(cmd, "", "")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(out, "  profiling [flags]"), "expected profiling help output")
 	})
 
 	t.Run("runs profiling with conflict args", func(t *testing.T) {
 		// --enable and --disable can't be used together
-		_, err := testutil.ExecuteCommand(newProfilingCommand(), "--enable", "--disable")
+		p, _ := testutil.NewTestAdminParams()
+		cmd := NewProfilingCommand(p)
+		_, err := testutil.ExecuteCommand(cmd, "--enable", "--disable")
 		assert.ErrorContains(t, err, "flags '--enable' and '--disable' can not be used together", err)
 
 		// --enable or --disable --target can't be used with other flags
@@ -110,7 +99,9 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--disable", "--thread-create"},
 		}
 		for _, args := range argsList {
-			_, err := testutil.ExecuteCommand(newProfilingCommand(), args...)
+			p, _ = testutil.NewTestAdminParams()
+			cmd = NewProfilingCommand(p)
+			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "flag '--enable' or '--disable' can not be used with other flags", err)
 		}
 
@@ -137,7 +128,9 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--thread-create", "--save-to", "/tmp"},
 		}
 		for _, args := range argsList {
-			_, err := testutil.ExecuteCommand(newProfilingCommand(), args...)
+			p, _ = testutil.NewTestAdminParams()
+			cmd = NewProfilingCommand(p)
+			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "requires '--target' flag", err)
 		}
 
@@ -147,7 +140,9 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--target", "activator", "--save-to", "/tmp"},
 		}
 		for _, args := range argsList {
-			_, err := testutil.ExecuteCommand(newProfilingCommand(), args...)
+			p, _ = testutil.NewTestAdminParams()
+			cmd = NewProfilingCommand(p)
+			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "requires '--all' or a specific profiling type flag", err)
 		}
 	})
@@ -219,7 +214,8 @@ func TestNewProfilingCommand(t *testing.T) {
 
 	t.Run("failed to enable profiling", func(t *testing.T) {
 		cm := &corev1.ConfigMap{}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		client.CoreV1().(*k8sfakecorev1.FakeCoreV1).PrependReactor("get", "configmaps",
 			func(action k8stesting.Action) (handled bool, ret k8srt.Object, err error) {
 				return true, &corev1.ConfigMap{}, errors.New("error getting configmap")
@@ -234,7 +230,8 @@ func TestNewProfilingCommand(t *testing.T) {
 
 	t.Run("failed to disable profiling", func(t *testing.T) {
 		cm := &corev1.ConfigMap{}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		client.CoreV1().(*k8sfakecorev1.FakeCoreV1).PrependReactor("get", "configmaps",
 			func(action k8stesting.Action) (handled bool, ret k8srt.Object, err error) {
 				return true, &corev1.ConfigMap{}, errors.New("error getting configmap")
@@ -248,7 +245,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "false"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		out, err := testutil.ExecuteCommand(cmd, "--enable")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(out, "Knative Serving profiling is enabled"))
@@ -263,7 +261,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		out, err := testutil.ExecuteCommand(cmd, "--disable")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(out, "Knative Serving profiling is disabled"))
@@ -278,7 +277,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, _ := newProfilingCommandWith(cm)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		savePath := "/tmp/xsidsk2hsdks"
 
 		_, err := testutil.ExecuteCommand(cmd, "--target", "activator", "--heap", "--save-to", savePath)
@@ -290,7 +290,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, _ := newProfilingCommandWith(cm)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		_, filename, _, _ := runtime.Caller(0)
 		savePath := filename
 
@@ -303,7 +304,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "false"},
 		}
-		cmd, _ := newProfilingCommandWith(cm)
+		p, _ := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--target", "activator", "--heap")
 		assert.ErrorContains(t, err, "profiling is not enabled, please use '--enable' to enalbe it first", err)
 	})
@@ -313,7 +315,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		client.CoreV1().(*k8sfakecorev1.FakeCoreV1).PrependReactor("list", "pods",
 			func(action k8stesting.Action) (handled bool, ret k8srt.Object, err error) {
 				return true, &corev1.PodList{}, errors.New("error listing pods")
@@ -327,7 +330,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		client.CoreV1().(*k8sfakecorev1.FakeCoreV1).PrependReactor("list", "pods",
 			func(action k8stesting.Action) (handled bool, ret k8srt.Object, err error) {
 				return true, &corev1.PodList{}, nil
@@ -341,7 +345,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		pods := corev1.PodList{Items: []corev1.Pod{
 			{
 				Status: corev1.PodStatus{Phase: corev1.PodRunning},
@@ -369,7 +374,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		cwd, _ := os.Getwd()
 		podName := "activator-0xxxx"
 		pods := corev1.PodList{Items: []corev1.Pod{
@@ -402,7 +408,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		cwd, _ := os.Getwd()
 		podName := "activator-1xxx"
 		pods := corev1.PodList{Items: []corev1.Pod{
@@ -437,7 +444,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		cwd, _ := os.Getwd()
 		podNames := []string{"activator-2xxx0", "activator-2xxx1"}
 		pods := corev1.PodList{}
@@ -477,7 +485,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		cwd, _ := os.Getwd()
 		podName := "activator-3xxxx"
 		pods := corev1.PodList{Items: []corev1.Pod{
@@ -514,7 +523,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		cmd, client := newProfilingCommandWith(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		cmd := NewProfilingCommand(p)
 		cwd, _ := os.Getwd()
 		podName := "activator-4xxxx"
 		pods := corev1.PodList{Items: []corev1.Pod{
