@@ -58,6 +58,47 @@ func newE2ETest(t *testing.T) *e2eTest {
 	return e2eTest
 }
 
+func TestKnAdminPluginWithNoKubectlContext(t *testing.T) {
+	e2eTest := newE2ETest(t)
+	assert.Assert(t, e2eTest != nil)
+	defer func() {
+		assert.NilError(t, e2eTest.it.KnTest().Teardown())
+	}()
+
+	// get current context
+	currentCtx, err := e2eTest.kubectl.Run("config", "current-context")
+	assert.NilError(t, err)
+	assert.Check(t, currentCtx != "", "kubectl current context should not be empty")
+	currentCtx = strings.Trim(currentCtx, "\n")
+
+	// restore current context before exiting
+	defer func() {
+		_, err := e2eTest.kubectl.Run("config", "set", "current-context", currentCtx)
+		assert.NilError(t, err)
+		t.Log("kubectl current context is set to: " + currentCtx)
+	}()
+
+	// unset current context
+	_, err = e2eTest.kubectl.Run("config", "unset", "current-context")
+	assert.NilError(t, err)
+
+	// prepare admin plugin
+	r := test.NewKnRunResultCollector(t, e2eTest.it.KnTest())
+	defer r.DumpIfFailed()
+
+	// install admin plugin
+	assert.NilError(t, e2eTest.it.KnPlugin().Install())
+
+	// run kn admin profiling to make sure no runtime panic
+	t.Log("run kn admin profiling subcommand with no kubectl context")
+	out := e2eTest.kn.Run(pluginName, "profiling", "--heap", "-t", "activator")
+	r.AssertError(out)
+	assert.Check(t, strings.Contains(out.Stdout, "Error: invalid configuration: no configuration has been provided"))
+
+	// uninstall admin plugin
+	assert.NilError(t, e2eTest.it.KnPlugin().Uninstall())
+}
+
 func TestKnAdminPlugin(t *testing.T) {
 	t.Parallel()
 
