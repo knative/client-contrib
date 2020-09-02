@@ -59,7 +59,8 @@ func removeProfileDataFiles(nameFilter string) {
 // TestNewProfilingCommand tests the profiling command
 func TestNewProfilingCommand(t *testing.T) {
 	t.Run("runs profiling without args", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewProfilingCommand(p)
 		out, err := testutil.ExecuteCommand(cmd, "", "")
 		assert.NilError(t, err)
@@ -68,7 +69,8 @@ func TestNewProfilingCommand(t *testing.T) {
 
 	t.Run("runs profiling with conflict args", func(t *testing.T) {
 		// --enable and --disable can't be used together
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewProfilingCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--enable", "--disable")
 		assert.ErrorContains(t, err, "flags '--enable' and '--disable' can not be used together", err)
@@ -99,7 +101,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--disable", "--thread-create"},
 		}
 		for _, args := range argsList {
-			p, _ = testutil.NewTestAdminParams()
+			p, client = testutil.NewTestAdminParams()
+			assert.Check(t, client != nil)
 			cmd = NewProfilingCommand(p)
 			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "flag '--enable' or '--disable' can not be used with other flags", err)
@@ -128,7 +131,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--thread-create", "--save-to", "/tmp"},
 		}
 		for _, args := range argsList {
-			p, _ = testutil.NewTestAdminParams()
+			p, client = testutil.NewTestAdminParams()
+			assert.Check(t, client != nil)
 			cmd = NewProfilingCommand(p)
 			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "requires '--target' flag", err)
@@ -140,7 +144,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			{"--target", "activator", "--save-to", "/tmp"},
 		}
 		for _, args := range argsList {
-			p, _ = testutil.NewTestAdminParams()
+			p, client = testutil.NewTestAdminParams()
+			assert.Check(t, client != nil)
 			cmd = NewProfilingCommand(p)
 			_, err := testutil.ExecuteCommand(cmd, args...)
 			assert.ErrorContains(t, err, "requires '--all' or a specific profiling type flag", err)
@@ -277,7 +282,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewProfilingCommand(p)
 		savePath := "/tmp/xsidsk2hsdks"
 
@@ -290,7 +296,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "true"},
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewProfilingCommand(p)
 		_, filename, _, _ := runtime.Caller(0)
 		savePath := filename
@@ -304,7 +311,8 @@ func TestNewProfilingCommand(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: obsConfigMap, Namespace: knNamespace},
 			Data:       map[string]string{"profiling.enable": "false"},
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewProfilingCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--target", "activator", "--heap")
 		assert.ErrorContains(t, err, "profiling is not enabled, please use '--enable' to enalbe it first", err)

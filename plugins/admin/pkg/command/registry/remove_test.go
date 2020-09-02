@@ -30,7 +30,8 @@ import (
 
 func TestNewRegistryRmCommand(t *testing.T) {
 	t.Run("incompleted args for registry remove", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryRmCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
@@ -41,7 +42,8 @@ func TestNewRegistryRmCommand(t *testing.T) {
 	})
 
 	t.Run("registry not found", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)

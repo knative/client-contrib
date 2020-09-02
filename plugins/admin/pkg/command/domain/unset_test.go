@@ -34,7 +34,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 			},
 			Data: make(map[string]string),
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewDomainUnSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "")
@@ -42,7 +43,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewDomainUnSetCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.ErrorContains(t, err, "failed to get configmaps", err)
@@ -58,7 +60,8 @@ func TestNewDomainUnSetCommand(t *testing.T) {
 				"dummy.domain": "",
 			},
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewDomainUnSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "not-dummy.domain")

@@ -52,7 +52,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 			},
 			Data: make(map[string]string),
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewDomainSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "")
@@ -60,7 +61,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewDomainSetCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain")
 		assert.ErrorContains(t, err, "failed to get ConfigMap", err)
@@ -179,7 +181,8 @@ func TestNewDomainSetCommand(t *testing.T) {
 				"foo.bar": "",
 			},
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewDomainSetCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--custom-domain", "dummy.domain", "--selector", "app")

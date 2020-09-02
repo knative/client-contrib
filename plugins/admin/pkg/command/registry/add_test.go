@@ -34,7 +34,8 @@ import (
 func TestNewRegistryAddCommand(t *testing.T) {
 
 	t.Run("incompleted args for registry add", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryAddCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
@@ -48,7 +49,8 @@ func TestNewRegistryAddCommand(t *testing.T) {
 	})
 
 	t.Run("missing default serviceaccount", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryAddCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--username", "user", "--password", "dummy", "--server", "docker.io")
 		assert.ErrorContains(t, err, "failed to get serviceaccount")

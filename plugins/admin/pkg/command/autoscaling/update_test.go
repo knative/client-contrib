@@ -34,7 +34,8 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 			},
 			Data: make(map[string]string),
 		}
-		p, _ := testutil.NewTestAdminParams(cm)
+		p, client := testutil.NewTestAdminParams(cm)
+		assert.Check(t, client != nil)
 		cmd := NewAutoscalingUpdateCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd)
@@ -42,7 +43,8 @@ func TestNewAsUpdateSetCommand(t *testing.T) {
 	})
 
 	t.Run("config map not exist", func(t *testing.T) {
-		p, _ := testutil.NewTestAdminParams()
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewAutoscalingUpdateCommand(p)
 		_, err := testutil.ExecuteCommand(cmd, "--scale-to-zero")
 		assert.ErrorContains(t, err, "failed to get ConfigMaps", err)
