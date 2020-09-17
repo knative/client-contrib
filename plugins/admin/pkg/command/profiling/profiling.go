@@ -154,9 +154,9 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 			if flags.NFlag() < 1 {
 				return nil
 			} else if flags.Changed("enable") {
-				return configProfiling(p.ClientSet, cmd, true)
+				return configProfiling(p, cmd, true)
 			} else if flags.Changed("disable") {
-				return configProfiling(p.ClientSet, cmd, false)
+				return configProfiling(p, cmd, false)
 			} else {
 				return downloadProfileData(p, cmd, &pflags)
 			}
@@ -181,9 +181,14 @@ func NewProfilingCommand(p *pkg.AdminParams) *cobra.Command {
 }
 
 // configProfiling enables or disables knative profiling
-func configProfiling(c kubernetes.Interface, cmd *cobra.Command, enable bool) error {
+func configProfiling(p *pkg.AdminParams, cmd *cobra.Command, enable bool) error {
+	client, err := p.NewKubeClient()
+	if err != nil {
+		return err
+	}
+
 	currentCm := &corev1.ConfigMap{}
-	currentCm, err := c.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
+	currentCm, err = client.CoreV1().ConfigMaps(knNamespace).Get(obsConfigMap, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get ConfigMap %s in namespace %s: %+v", obsConfigMap, knNamespace, err)
 	}
@@ -195,7 +200,7 @@ func configProfiling(c kubernetes.Interface, cmd *cobra.Command, enable bool) er
 		desiredCm.Data["profiling.enable"] = "false"
 	}
 
-	err = utils.UpdateConfigMap(c, desiredCm)
+	err = utils.UpdateConfigMap(client, desiredCm)
 	if err != nil {
 		return fmt.Errorf("failed to update ConfigMap %s in namespace %s: %+v", obsConfigMap, knNamespace, err)
 	}
@@ -281,6 +286,11 @@ func durationDescription(seconds int64) string {
 
 // downloadProfileData downloads profile data by given profile type
 func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profilingFlags) error {
+	client, err := p.NewKubeClient()
+	if err != nil {
+		return err
+	}
+
 	// check profile types
 	profileTypes := map[string]profileTypeOption{}
 	if pflags.allProfiles {
@@ -356,7 +366,6 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 	}
 
 	// check --save-to path
-	var err error
 	if pflags.saveTo == "" {
 		pflags.saveTo, err = os.Getwd()
 		if err != nil {
@@ -375,7 +384,7 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 	}
 
 	// check if profiling is enabled, if not, print message to ask user enable it first
-	enabled, err := isProfilingEnabled(p.ClientSet)
+	enabled, err := isProfilingEnabled(client)
 	if err != nil {
 		return err
 	}
@@ -384,13 +393,13 @@ func downloadProfileData(p *pkg.AdminParams, cmd *cobra.Command, pflags *profili
 	}
 
 	// try to find target as a knative component name
-	pods, err := p.ClientSet.CoreV1().Pods(knNamespace).List(metav1.ListOptions{LabelSelector: "app=" + pflags.target})
+	pods, err := client.CoreV1().Pods(knNamespace).List(metav1.ListOptions{LabelSelector: "app=" + pflags.target})
 	if err != nil {
 		return err
 	}
 	// if no pod found, try to find target as a pod name in knative namespace
 	if len(pods.Items) < 1 {
-		pods, err = p.ClientSet.CoreV1().Pods(knNamespace).List(metav1.ListOptions{})
+		pods, err = client.CoreV1().Pods(knNamespace).List(metav1.ListOptions{})
 		if err != nil {
 			return err
 		}

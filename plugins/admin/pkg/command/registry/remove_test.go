@@ -26,18 +26,12 @@ import (
 
 	"knative.dev/client-contrib/plugins/admin/pkg"
 	"knative.dev/client-contrib/plugins/admin/pkg/testutil"
-
-	k8sfake "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestNewRegistryRmCommand(t *testing.T) {
 	t.Run("incompleted args for registry remove", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryRmCommand(p)
 
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
@@ -48,11 +42,8 @@ func TestNewRegistryRmCommand(t *testing.T) {
 	})
 
 	t.Run("registry not found", func(t *testing.T) {
-		client := k8sfake.NewSimpleClientset()
-
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
+		p, client := testutil.NewTestAdminParams()
+		assert.Check(t, client != nil)
 		cmd := NewRegistryRmCommand(p)
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
@@ -97,13 +88,9 @@ func TestNewRegistryRmCommand(t *testing.T) {
 				".dockerconfigjson": j,
 			},
 		}
-		client := k8sfake.NewSimpleClientset(&sa, &secret)
-
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
+		p, client := testutil.NewTestAdminParams(&sa, &secret)
 		cmd := NewRegistryRmCommand(p)
+
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'default' in namespace 'default' is updated"), "unexpected output: %s", o)
@@ -166,13 +153,9 @@ func TestNewRegistryRmCommand(t *testing.T) {
 				".dockerconfigjson": j,
 			},
 		}
-		client := k8sfake.NewSimpleClientset(&ns, &sa, &secret)
-
-		p := &pkg.AdminParams{
-			ClientSet: client,
-		}
-
+		p, client := testutil.NewTestAdminParams(&ns, &sa, &secret)
 		cmd := NewRegistryRmCommand(p)
+
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io", "--namespace", "custom-namespace", "--serviceaccount", "custom-serviceaccount")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'custom-serviceaccount' in namespace 'custom-namespace' is updated"), "unexpected output: %s", o)

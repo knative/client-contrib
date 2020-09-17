@@ -29,26 +29,16 @@ var LabelManagedBy = "app.kubernetes.io/managed-by"
 
 // AdminParams stores the configs for interacting with kube api
 type AdminParams struct {
-	KubeCfgPath  string
-	ClientConfig clientcmd.ClientConfig
-	ClientSet    kubernetes.Interface
+	KubeCfgPath   string
+	ClientConfig  clientcmd.ClientConfig
+	NewKubeClient func() (kubernetes.Interface, error)
 }
 
 // Initialize generate the clientset for params
-func (params *AdminParams) Initialize() error {
-	if params.ClientSet == nil {
-		restConfig, err := params.RestConfig()
-		if err != nil {
-			return err
-		}
-
-		params.ClientSet, err = kubernetes.NewForConfig(restConfig)
-		if err != nil {
-			fmt.Println("failed to create client:", err)
-			os.Exit(1)
-		}
+func (params *AdminParams) Initialize() {
+	if params.NewKubeClient == nil {
+		params.NewKubeClient = params.newKubeClient
 	}
-	return nil
 }
 
 // RestConfig returns REST config, which can be to use to create specific clientset
@@ -93,4 +83,14 @@ func (params *AdminParams) GetClientConfig() (clientcmd.ClientConfig, error) {
 			"Please use the env var KUBECONFIG if you want to check for multiple configuration files", params.KubeCfgPath)
 	}
 	return nil, fmt.Errorf("Config file '%s' can not be found", params.KubeCfgPath)
+}
+
+// newKubeClient creates a kubenetes clientset from kubenetes config
+func (params *AdminParams) newKubeClient() (kubernetes.Interface, error) {
+	restConfig, err := params.RestConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return kubernetes.NewForConfig(restConfig)
 }
