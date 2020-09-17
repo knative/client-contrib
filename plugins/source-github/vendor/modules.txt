@@ -2,6 +2,8 @@
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 github.com/PuerkitoBio/urlesc
+# github.com/cpuguy83/go-md2man/v2 v2.0.0
+github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/emicklei/go-restful v2.9.5+incompatible
@@ -39,7 +41,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-containerregistry v0.0.0-20200304201134-fcc8ea80e26f
+# github.com/google/go-containerregistry v0.0.0-20200413145205-82d30a103c0a
 github.com/google/go-containerregistry/pkg/name
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
@@ -80,8 +82,17 @@ github.com/magiconair/properties
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/maximilien/kn-source-pkg v0.4.0
+# github.com/maximilien/kn-source-pkg v0.4.7
+github.com/maximilien/kn-source-pkg/pkg/client
+github.com/maximilien/kn-source-pkg/pkg/commands/source
+github.com/maximilien/kn-source-pkg/pkg/core
+github.com/maximilien/kn-source-pkg/pkg/factories
 github.com/maximilien/kn-source-pkg/pkg/types
+github.com/maximilien/kn-source-pkg/pkg/types/typesfakes
+github.com/maximilien/kn-source-pkg/pkg/util
+github.com/maximilien/kn-source-pkg/test/e2e
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -96,6 +107,10 @@ github.com/peterbourgon/diskv
 github.com/pkg/errors
 # github.com/robfig/cron v1.2.0
 github.com/robfig/cron
+# github.com/russross/blackfriday/v2 v2.0.1
+github.com/russross/blackfriday/v2
+# github.com/shurcooL/sanitized_anchor_name v1.0.0
+github.com/shurcooL/sanitized_anchor_name
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
@@ -103,6 +118,7 @@ github.com/spf13/afero/mem
 github.com/spf13/cast
 # github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
+github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v1.0.0
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
@@ -120,7 +136,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+# golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 golang.org/x/net/context
@@ -161,7 +177,7 @@ google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/yaml.v2 v2.2.4
+# gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
 # gotest.tools v2.2.0+incompatible
 gotest.tools/assert
@@ -169,7 +185,7 @@ gotest.tools/assert/cmp
 gotest.tools/internal/difflib
 gotest.tools/internal/format
 gotest.tools/internal/source
-# k8s.io/api v0.17.0
+# k8s.io/api v0.17.4
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -210,7 +226,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.17.0
+# k8s.io/apimachinery v0.17.4
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -272,7 +288,7 @@ k8s.io/cli-runtime/pkg/kustomize/k8sdeps/transformer/patch
 k8s.io/cli-runtime/pkg/kustomize/k8sdeps/validator
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.17.0
+# k8s.io/client-go v0.17.4
 k8s.io/client-go/discovery
 k8s.io/client-go/discovery/cached/disk
 k8s.io/client-go/dynamic
@@ -448,7 +464,8 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
-# knative.dev/client v0.13.1-0.20200406212659-8a60d2ebf8e2
+# knative.dev/client v0.14.0
+knative.dev/client/lib/test
 knative.dev/client/pkg/dynamic
 knative.dev/client/pkg/errors
 knative.dev/client/pkg/eventing/v1alpha1
@@ -462,7 +479,7 @@ knative.dev/client/pkg/sources/v1alpha2
 knative.dev/client/pkg/util
 knative.dev/client/pkg/util/mock
 knative.dev/client/pkg/wait
-# knative.dev/eventing v0.13.5
+# knative.dev/eventing v0.14.1
 knative.dev/eventing/pkg/apis/config
 knative.dev/eventing/pkg/apis/configs
 knative.dev/eventing/pkg/apis/configs/v1alpha1
@@ -475,8 +492,6 @@ knative.dev/eventing/pkg/apis/eventing/v1beta1
 knative.dev/eventing/pkg/apis/flows
 knative.dev/eventing/pkg/apis/flows/v1alpha1
 knative.dev/eventing/pkg/apis/flows/v1beta1
-knative.dev/eventing/pkg/apis/legacysources
-knative.dev/eventing/pkg/apis/legacysources/v1alpha1
 knative.dev/eventing/pkg/apis/messaging
 knative.dev/eventing/pkg/apis/messaging/config
 knative.dev/eventing/pkg/apis/messaging/v1alpha1
@@ -490,9 +505,11 @@ knative.dev/eventing/pkg/client/clientset/versioned/typed/eventing/v1alpha1/fake
 knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2
 knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2/fake
 knative.dev/eventing/pkg/logging
-# knative.dev/eventing-contrib v0.14.0
+# knative.dev/eventing-contrib v0.14.1
 knative.dev/eventing-contrib/github/pkg/apis/sources/v1alpha1
-# knative.dev/pkg v0.0.0-20200404181734-92cdec5b3593
+knative.dev/eventing-contrib/github/pkg/client/clientset/versioned/scheme
+knative.dev/eventing-contrib/github/pkg/client/clientset/versioned/typed/sources/v1alpha1
+# knative.dev/pkg v0.0.0-20200414233146-0eed424fa4ee
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
 knative.dev/pkg/apis/duck/v1
@@ -509,7 +526,7 @@ knative.dev/pkg/profiling
 knative.dev/pkg/ptr
 knative.dev/pkg/tracker
 knative.dev/pkg/webhook/resourcesemantics
-# knative.dev/serving v0.13.1-0.20200403170819-0e8f7a9e34f0
+# knative.dev/serving v0.14.0
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
 knative.dev/serving/pkg/apis/config

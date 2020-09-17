@@ -45,12 +45,16 @@ echo ""
 
 # Start testing
 echo "🧪  Testing"
-go test ${base}/test/e2e/ -test.v -tags "e2e ${E2E_TAGS}" "$@"
+echo ${base}/test/e2e/
+go test ${base}/test/e2e/ -test.v -tags "e2e" ./...
+err=$?
 
 # Output
 echo ""
-if [ $? -eq 0 ]; then
+if [ $err -eq 0 ]; then
    echo "✅ Success"
 else
 	echo "❗️Failure"
 fi
+
+exit $err

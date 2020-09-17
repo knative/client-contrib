@@ -16,8 +16,24 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/maximilien/kn-source-github/pkg/factories"
+	"github.com/maximilien/kn-source-pkg/pkg/core"
 )
 
 func main() {
-	fmt.Printf("This is placeholder code to get the dependencies merged. Sudsequent PRs will have kn-source-guthub code\n")
+	ghSourceFactory := factories.NewGHSourceFactory()
+
+	ghCommandFactory := factories.NewGHCommandFactory(ghSourceFactory)
+	ghFlagsFactory := factories.NewGHFlagsFactory(ghSourceFactory)
+	ghRunEFactory := factories.NewGHRunEFactory(ghSourceFactory)
+
+	err := core.NewKnSourceCommand(ghSourceFactory, ghCommandFactory, ghFlagsFactory, ghRunEFactory).Execute()
+	if err != nil {
+		if err.Error() != "subcommand is required" {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(1)
+	}
 }
