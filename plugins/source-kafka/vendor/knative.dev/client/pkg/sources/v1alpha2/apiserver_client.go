@@ -111,7 +111,7 @@ func (c *apiServerSourcesClient) Namespace() string {
 func (c *apiServerSourcesClient) ListAPIServerSource() (*v1alpha2.ApiServerSourceList, error) {
 	sourceList, err := c.client.List(metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, knerrors.GetError(err)
 	}
 
 	return updateAPIServerSourceListGVK(sourceList)
@@ -180,6 +180,27 @@ func (b *APIServerSourceBuilder) EventMode(eventMode string) *APIServerSourceBui
 // Sink or destination of the source
 func (b *APIServerSourceBuilder) Sink(sink duckv1.Destination) *APIServerSourceBuilder {
 	b.apiServerSource.Spec.Sink = sink
+	return b
+}
+
+// CloudEventOverrides adds given Cloud Event override extensions map to source spec
+func (b *APIServerSourceBuilder) CloudEventOverrides(ceo map[string]string, toRemove []string) *APIServerSourceBuilder {
+	if ceo == nil && len(toRemove) == 0 {
+		return b
+	}
+
+	ceOverrides := b.apiServerSource.Spec.CloudEventOverrides
+	if ceOverrides == nil {
+		ceOverrides = &duckv1.CloudEventOverrides{Extensions: map[string]string{}}
+		b.apiServerSource.Spec.CloudEventOverrides = ceOverrides
+	}
+	for k, v := range ceo {
+		ceOverrides.Extensions[k] = v
+	}
+	for _, r := range toRemove {
+		delete(ceOverrides.Extensions, r)
+	}
+
 	return b
 }
 

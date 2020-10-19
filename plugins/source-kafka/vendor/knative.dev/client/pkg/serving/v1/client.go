@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/fields"
 	"knative.dev/pkg/apis"
@@ -254,7 +253,7 @@ func updateServiceWithRetry(cl KnServingClient, name string, updateFunc serviceU
 				time.Sleep(time.Second)
 				continue
 			}
-			return errors.Wrap(err, fmt.Sprintf("giving up after %d retries", nrRetries))
+			return fmt.Errorf("giving up after %d retries: %w", nrRetries, err)
 		}
 		return nil
 	}
@@ -379,6 +378,13 @@ func getBaseRevision(cl KnServingClient, service *servingv1.Service) (*servingv1
 
 // Delete a revision by name
 func (cl *knServingClient) DeleteRevision(name string, timeout time.Duration) error {
+	revision, err := cl.client.Revisions(cl.namespace).Get(name, v1.GetOptions{})
+	if err != nil {
+		return clienterrors.GetError(err)
+	}
+	if revision.GetDeletionTimestamp() != nil {
+		return fmt.Errorf("can't delete revision '%s' because it has been already marked for deletion", name)
+	}
 	if timeout == 0 {
 		return cl.deleteRevision(name)
 	}
@@ -388,7 +394,7 @@ func (cl *knServingClient) DeleteRevision(name string, timeout time.Duration) er
 		err, _ := waitForEvent.Wait(name, wait.Options{Timeout: &timeout}, wait.NoopMessageCallback())
 		waitC <- err
 	}()
-	err := cl.deleteRevision(name)
+	err = cl.deleteRevision(name)
 	if err != nil {
 		return clienterrors.GetError(err)
 	}
