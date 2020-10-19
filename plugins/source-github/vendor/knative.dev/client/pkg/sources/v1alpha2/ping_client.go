@@ -18,14 +18,10 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/eventing/pkg/apis/sources/v1alpha2"
 
-	"knative.dev/eventing/pkg/client/clientset/versioned/scheme"
 	clientv1alpha2 "knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
-
-	"knative.dev/client/pkg/util"
 )
 
 // Interface for interacting with a Ping source
@@ -122,10 +118,6 @@ func updatePingSourceListGVK(sourceList *v1alpha2.PingSourceList) (*v1alpha2.Pin
 	return sourceListNew, nil
 }
 
-func updateSourceGVK(obj runtime.Object) error {
-	return util.UpdateGroupVersionKindWithScheme(obj, v1alpha2.SchemeGroupVersion, scheme.Scheme)
-}
-
 // Builder for building up Ping sources
 
 type PingSourceBuilder struct {
@@ -156,6 +148,27 @@ func (b *PingSourceBuilder) JsonData(data string) *PingSourceBuilder {
 
 func (b *PingSourceBuilder) Sink(sink duckv1.Destination) *PingSourceBuilder {
 	b.pingSource.Spec.Sink = sink
+	return b
+}
+
+// CloudEventOverrides adds given Cloud Event override extensions map to source spec
+func (b *PingSourceBuilder) CloudEventOverrides(ceo map[string]string, toRemove []string) *PingSourceBuilder {
+	if ceo == nil && len(toRemove) == 0 {
+		return b
+	}
+
+	ceOverrides := b.pingSource.Spec.CloudEventOverrides
+	if ceOverrides == nil {
+		ceOverrides = &duckv1.CloudEventOverrides{Extensions: map[string]string{}}
+		b.pingSource.Spec.CloudEventOverrides = ceOverrides
+	}
+	for k, v := range ceo {
+		ceOverrides.Extensions[k] = v
+	}
+	for _, r := range toRemove {
+		delete(ceOverrides.Extensions, r)
+	}
+
 	return b
 }
 

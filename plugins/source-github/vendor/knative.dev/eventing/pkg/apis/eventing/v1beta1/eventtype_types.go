@@ -26,8 +26,10 @@ import (
 )
 
 // +genclient
+// +genreconciler
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// EventType represents a type of event that can be consumed from a Broker.
 type EventType struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
@@ -39,6 +41,7 @@ type EventType struct {
 	// Status represents the current state of the EventType.
 	// This data may be out of date.
 	// +optional
+	// TODO might be removed https://github.com/knative/eventing/issues/2750
 	Status EventTypeStatus `json:"status,omitempty"`
 }
 
@@ -54,19 +57,30 @@ var (
 
 	// Check that we can create OwnerReferences to an EventType.
 	_ kmeta.OwnerRefable = (*EventType)(nil)
+
+	// Check that the type conforms to the duck Knative Resource shape.
+	_ duckv1.KRShaped = (*EventType)(nil)
 )
 
 type EventTypeSpec struct {
 	// Type represents the CloudEvents type. It is authoritative.
 	Type string `json:"type"`
 	// Source is a URI, it represents the CloudEvents source.
-	Source apis.URL `json:"source"`
+	// +optional
+	Source *apis.URL `json:"source,omitempty"`
 	// Schema is a URI, it represents the CloudEvents schemaurl extension attribute.
 	// It may be a JSON schema, a protobuf schema, etc. It is optional.
 	// +optional
 	Schema *apis.URL `json:"schema,omitempty"`
+	// SchemaData allows the CloudEvents schema to be stored directly in the
+	// EventType. Content is dependent on the encoding. Optional attribute.
+	// The contents are not validated or manipulated by the system.
+	// +optional
+	SchemaData string `json:"schemaData,omitempty"`
+	// TODO remove https://github.com/knative/eventing/issues/2750
 	// Broker refers to the Broker that can provide the EventType.
-	Broker string `json:"broker"`
+	// +optional
+	Broker string `json:"broker,omitempty"`
 	// Description is an optional field used to describe the EventType, in any meaningful way.
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -98,4 +112,9 @@ func (p *EventType) GetGroupVersionKind() schema.GroupVersionKind {
 // GetUntypedSpec returns the spec of the EventType.
 func (e *EventType) GetUntypedSpec() interface{} {
 	return e.Spec
+}
+
+// GetStatus retrieves the status of the EventType. Implements the KRShaped interface.
+func (t *EventType) GetStatus() *duckv1.Status {
+	return &t.Status.Status
 }

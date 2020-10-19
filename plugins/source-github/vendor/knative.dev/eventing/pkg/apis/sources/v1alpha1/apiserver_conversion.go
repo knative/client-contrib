@@ -18,19 +18,20 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 	"reflect"
+
+	"github.com/google/go-cmp/cmp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/eventing/pkg/apis/sources/v1alpha2"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
-	"knative.dev/pkg/ptr"
 )
 
 // ConvertTo implements apis.Convertible.
-// Converts source (from v1alpha1.ApiServerSource) into v1alpha2.ApiServerSource
+// Converts source (from v1alpha1.ApiServerSource) into into a higher version.
 func (source *ApiServerSource) ConvertTo(ctx context.Context, obj apis.Convertible) error {
 	switch sink := obj.(type) {
 	case *v1alpha2.ApiServerSource:
@@ -40,12 +41,17 @@ func (source *ApiServerSource) ConvertTo(ctx context.Context, obj apis.Convertib
 		// Spec
 
 		if len(source.Spec.Resources) > 0 {
-			sink.Spec.Resources = make([]v1alpha2.APIVersionKind, len(source.Spec.Resources))
+			sink.Spec.Resources = make([]v1alpha2.APIVersionKindSelector, len(source.Spec.Resources))
 		}
 		for i, v := range source.Spec.Resources {
-			sink.Spec.Resources[i] = v1alpha2.APIVersionKind{
-				APIVersion: ptr.String(v.APIVersion),
-				Kind:       ptr.String(v.Kind),
+			sink.Spec.Resources[i] = v1alpha2.APIVersionKindSelector{
+				APIVersion: v.APIVersion,
+				Kind:       v.Kind,
+			}
+
+			if !cmp.Equal(v.LabelSelector, metav1.LabelSelector{}) {
+				sink.Spec.Resources[i].LabelSelector = &metav1.LabelSelector{}
+				v.LabelSelector.DeepCopyInto(sink.Spec.Resources[i].LabelSelector)
 			}
 		}
 
@@ -57,10 +63,6 @@ func (source *ApiServerSource) ConvertTo(ctx context.Context, obj apis.Convertib
 		}
 
 		// Optional Spec
-
-		if source.Spec.LabelSelector != nil {
-			sink.Spec.LabelSelector = source.Spec.LabelSelector
-		}
 
 		if source.Spec.ResourceOwner != nil {
 			sink.Spec.ResourceOwner = source.Spec.ResourceOwner
@@ -92,12 +94,12 @@ func (source *ApiServerSource) ConvertTo(ctx context.Context, obj apis.Convertib
 		source.Status.SourceStatus.DeepCopyInto(&sink.Status.SourceStatus)
 		return nil
 	default:
-		return fmt.Errorf("Unknown conversion, got: %T", sink)
+		return apis.ConvertToViaProxy(ctx, source, &v1alpha2.ApiServerSource{}, sink)
 	}
 }
 
 // ConvertFrom implements apis.Convertible.
-// Converts obj from v1alpha2.ApiServerSource into v1alpha1.ApiServerSource
+// Converts obj from a higher version into v1alpha1.ApiServerSource.
 func (sink *ApiServerSource) ConvertFrom(ctx context.Context, obj apis.Convertible) error {
 	switch source := obj.(type) {
 	case *v1alpha2.ApiServerSource:
@@ -135,19 +137,14 @@ func (sink *ApiServerSource) ConvertFrom(ctx context.Context, obj apis.Convertib
 		}
 		for i, v := range source.Spec.Resources {
 			sink.Spec.Resources[i] = ApiServerResource{}
-			if v.APIVersion != nil {
-				sink.Spec.Resources[i].APIVersion = *v.APIVersion
-			}
-			if v.Kind != nil {
-				sink.Spec.Resources[i].Kind = *v.Kind
+			sink.Spec.Resources[i].APIVersion = v.APIVersion
+			sink.Spec.Resources[i].Kind = v.Kind
+			if v.LabelSelector != nil {
+				sink.Spec.Resources[i].LabelSelector = *v.LabelSelector
 			}
 		}
 
 		// Spec Optionals
-
-		if source.Spec.LabelSelector != nil {
-			sink.Spec.LabelSelector = source.Spec.LabelSelector
-		}
 
 		if source.Spec.ResourceOwner != nil {
 			sink.Spec.ResourceOwner = source.Spec.ResourceOwner
@@ -160,6 +157,6 @@ func (sink *ApiServerSource) ConvertFrom(ctx context.Context, obj apis.Convertib
 
 		return nil
 	default:
-		return fmt.Errorf("Unknown conversion, got: %T", source)
+		return apis.ConvertFromViaProxy(ctx, source, &v1alpha2.ApiServerSource{}, sink)
 	}
 }

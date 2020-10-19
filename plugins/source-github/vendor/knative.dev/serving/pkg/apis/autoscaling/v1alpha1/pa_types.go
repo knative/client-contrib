@@ -19,10 +19,10 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	net "knative.dev/networking/pkg/apis/networking"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 	"knative.dev/pkg/kmeta"
-	net "knative.dev/serving/pkg/apis/networking"
 )
 
 // +genclient
@@ -55,6 +55,9 @@ var (
 
 	// Check that we can create OwnerReferences to a PodAutoscaler.
 	_ kmeta.OwnerRefable = (*PodAutoscaler)(nil)
+
+	// Check that the type conforms to the duck Knative Resource shape.
+	_ duckv1.KRShaped = (*PodAutoscaler)(nil)
 )
 
 // ReachabilityType is the enumeration type for the different states of reachability
@@ -69,7 +72,7 @@ const (
 	// ReachabilityReachable means the `ScaleTarget` is reachable, ie. it has an active route.
 	ReachabilityReachable ReachabilityType = "Reachable"
 
-	// ReachabilityReachable means the `ScaleTarget` is not reachable, ie. it does not have an active route.
+	// ReachabilityUnreachable means the `ScaleTarget` is not reachable, ie. it does not have an active route.
 	ReachabilityUnreachable ReachabilityType = "Unreachable"
 )
 
@@ -96,7 +99,7 @@ type PodAutoscalerSpec struct {
 	// is responsible for quickly right-sizing.
 	ScaleTargetRef corev1.ObjectReference `json:"scaleTargetRef"`
 
-	// Reachable specifies whether or not the `ScaleTargetRef` can be reached (ie. has a route).
+	// Reachability specifies whether or not the `ScaleTargetRef` can be reached (ie. has a route).
 	// Defaults to `ReachabilityUnknown`
 	// +optional
 	Reachability ReachabilityType `json:"reachability,omitempty"`
@@ -109,8 +112,13 @@ const (
 	// PodAutoscalerConditionReady is set when the revision is starting to materialize
 	// runtime resources, and becomes true when those resources are ready.
 	PodAutoscalerConditionReady = apis.ConditionReady
+	// PodAutoscalerConditionScaleTargetInitialized is set when the PodAutoscaler's
+	// ScaleTargetRef was ready to serve traffic once.
+	PodAutoscalerConditionScaleTargetInitialized apis.ConditionType = "ScaleTargetInitialized"
 	// PodAutoscalerConditionActive is set when the PodAutoscaler's ScaleTargetRef is receiving traffic.
 	PodAutoscalerConditionActive apis.ConditionType = "Active"
+	// PodAutoscalerConditionSKSReady is set when SKS is ready.
+	PodAutoscalerConditionSKSReady = "SKSReady"
 )
 
 // PodAutoscalerStatus communicates the observed state of the PodAutoscaler (from the controller).
@@ -140,4 +148,9 @@ type PodAutoscalerList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []PodAutoscaler `json:"items"`
+}
+
+// GetStatus retrieves the status of the PodAutoscaler. Implements the KRShaped interface.
+func (t *PodAutoscaler) GetStatus() *duckv1.Status {
+	return &t.Status.Status
 }
