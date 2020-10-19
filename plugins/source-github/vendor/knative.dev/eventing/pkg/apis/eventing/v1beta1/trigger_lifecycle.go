@@ -31,7 +31,7 @@ const (
 
 	TriggerConditionBroker apis.ConditionType = "BrokerReady"
 
-	TriggerConditionSubscribed apis.ConditionType = "Subscribed"
+	TriggerConditionSubscribed apis.ConditionType = "SubscriptionReady"
 
 	TriggerConditionDependency apis.ConditionType = "DependencyReady"
 
@@ -40,6 +40,11 @@ const (
 	// TriggerAnyFilter Constant to represent that we should allow anything.
 	TriggerAnyFilter = ""
 )
+
+// GetConditionSet retrieves the condition set for this resource. Implements the KRShaped interface.
+func (*Trigger) GetConditionSet() apis.ConditionSet {
+	return triggerCondSet
+}
 
 // GetGroupVersionKind returns GroupVersionKind for Triggers
 func (t *Trigger) GetGroupVersionKind() schema.GroupVersionKind {
@@ -71,8 +76,7 @@ func (ts *TriggerStatus) InitializeConditions() {
 	triggerCondSet.Manage(ts).InitializeConditions()
 }
 
-func (ts *TriggerStatus) PropagateBrokerStatus(bs *BrokerStatus) {
-	bc := bs.GetTopLevelCondition()
+func (ts *TriggerStatus) PropagateBrokerCondition(bc *apis.Condition) {
 	if bc == nil {
 		ts.MarkBrokerNotConfigured()
 		return

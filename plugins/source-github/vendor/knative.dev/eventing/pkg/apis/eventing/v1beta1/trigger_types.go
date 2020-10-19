@@ -28,12 +28,20 @@ const (
 	// DependencyAnnotation is the annotation key used to mark the sources that the Trigger depends on.
 	// This will be used when the kn client creates a source and trigger pair for the user such that the trigger only receives events produced by the paired source.
 	DependencyAnnotation = "knative.dev/dependency"
-	// InjectionAnnotation is the annotation key used to enable knative eventing injection for a namespace and automatically create a default broker.
-	// This will be used when the client creates a trigger paired with default broker and the default broker doesn't exist in the namespace
-	InjectionAnnotation = "knative-eventing-injection"
+
+	// These are copied from ./pkg/reconcilers/sugar
+
+	// DeprecatedInjectionAnnotation
+	// Deprecated: v0.16, please use InjectionAnnotation.
+	DeprecatedInjectionAnnotation = "knative-eventing-injection"
+
+	// InjectionAnnotation is the annotation key used to enable knative eventing
+	// injection for a namespace to automatically create a broker.
+	InjectionAnnotation = "eventing.knative.dev/injection"
 )
 
 // +genclient
+// +genreconciler
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Trigger represents a request to have events delivered to a consumer from a
@@ -64,6 +72,9 @@ var (
 
 	// Check that we can create OwnerReferences to a Trigger.
 	_ kmeta.OwnerRefable = (*Trigger)(nil)
+
+	// Check that the type conforms to the duck Knative Resource shape.
+	_ duckv1.KRShaped = (*Trigger)(nil)
 )
 
 type TriggerSpec struct {
@@ -118,4 +129,9 @@ type TriggerList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Trigger `json:"items"`
+}
+
+// GetStatus retrieves the status of the Trigger. Implements the KRShaped interface.
+func (t *Trigger) GetStatus() *duckv1.Status {
+	return &t.Status.Status
 }

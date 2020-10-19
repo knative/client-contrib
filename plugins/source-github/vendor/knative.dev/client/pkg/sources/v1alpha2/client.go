@@ -15,6 +15,8 @@
 package v1alpha2
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	sourcesv1alpha2 "knative.dev/eventing/pkg/apis/sources/v1alpha2"
 	clientv1alpha2 "knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2"
 )
 
@@ -26,6 +28,9 @@ type KnSourcesClient interface {
 
 	// Get client for sink binding sources
 	SinkBindingClient() KnSinkBindingClient
+
+	// Get client for ApiServer sources
+	APIServerSourcesClient() KnAPIServerSourcesClient
 }
 
 // sourcesClient is a combination of Sources client interface and namespace
@@ -52,4 +57,19 @@ func (c *sourcesClient) PingSourcesClient() KnPingSourcesClient {
 // ApiServerSourcesClient for dealing with ApiServer sources
 func (c *sourcesClient) SinkBindingClient() KnSinkBindingClient {
 	return newKnSinkBindingClient(c.client.SinkBindings(c.namespace), c.namespace)
+}
+
+// ApiServerSourcesClient for dealing with ApiServer sources
+func (c *sourcesClient) APIServerSourcesClient() KnAPIServerSourcesClient {
+	return newKnAPIServerSourcesClient(c.client.ApiServerSources(c.namespace), c.namespace)
+}
+
+// BuiltInSourcesGVKs returns the GVKs for built in sources
+func BuiltInSourcesGVKs() []schema.GroupVersionKind {
+	return []schema.GroupVersionKind{
+		sourcesv1alpha2.SchemeGroupVersion.WithKind("ApiServerSource"),
+		sourcesv1alpha2.SchemeGroupVersion.WithKind("ContainerSource"),
+		sourcesv1alpha2.SchemeGroupVersion.WithKind("PingSource"),
+		sourcesv1alpha2.SchemeGroupVersion.WithKind("SinkBinding"),
+	}
 }

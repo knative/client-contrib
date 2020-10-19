@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	// DefaultConfigName is the name of config map for the default
+	// DefaultsConfigName is the name of config map for the default
 	// configs that brokers should use
 	DefaultsConfigName = "config-br-defaults"
 
@@ -58,7 +58,7 @@ func parseEntry(entry string, out interface{}) error {
 	if err != nil {
 		return fmt.Errorf("ConfigMap's value could not be converted to JSON: %s : %v", err, entry)
 	}
-	return json.Unmarshal([]byte(j), &out)
+	return json.Unmarshal(j, &out)
 }
 
 // NewDefaultsConfigFromConfigMap creates a Defaults from the supplied configMap
@@ -70,11 +70,19 @@ func NewDefaultsConfigFromConfigMap(config *corev1.ConfigMap) (*Defaults, error)
 type Defaults struct {
 	// NamespaceDefaultsConfig are the default Broker Configs for each namespace.
 	// Namespace is the key, the value is the KReference to the config.
-	NamespaceDefaultsConfig map[string]*duckv1.KReference `json:"namespaceDefaults,omitempty"`
+	NamespaceDefaultsConfig map[string]*ClassAndKRef `json:"namespaceDefaults,omitempty"`
 
 	// ClusterDefaultBrokerConfig is the default broker config for all the namespaces that
 	// are not in NamespaceDefaultBrokerConfigs.
-	ClusterDefault *duckv1.KReference `json:"clusterDefault,omitempty"`
+	ClusterDefault *ClassAndKRef `json:"clusterDefault,omitempty"`
+}
+
+// ClassAndKRef contains configuration for a given namespace for broker. Allows
+// configuring both the Class of the Broker as well as the reference to the
+// config it should use
+type ClassAndKRef struct {
+	BrokerClass        string `json:"brokerClass,omitempty"`
+	*duckv1.KReference `json:",inline"`
 }
 
 // GetBrokerConfig returns a namespace specific Broker Configuration, and if
@@ -85,11 +93,28 @@ func (d *Defaults) GetBrokerConfig(ns string) (*duckv1.KReference, error) {
 		return nil, errors.New("Defaults are nil")
 	}
 	value, present := d.NamespaceDefaultsConfig[ns]
-	if present {
-		return value, nil
+	if present && value.KReference != nil {
+		return value.KReference, nil
 	}
-	if d.ClusterDefault != nil {
-		return d.ClusterDefault, nil
+	if d.ClusterDefault != nil && d.ClusterDefault.KReference != nil {
+		return d.ClusterDefault.KReference, nil
 	}
 	return nil, errors.New("Defaults for Broker Configurations have not been set up.")
+}
+
+// GetBrokerClass returns a namespace specific Broker Class, and if
+// that doesn't exist, return a Cluster Default and if that doesn't exist
+// return an error.
+func (d *Defaults) GetBrokerClass(ns string) (string, error) {
+	if d == nil {
+		return "", errors.New("Defaults are nil")
+	}
+	value, present := d.NamespaceDefaultsConfig[ns]
+	if present && value.BrokerClass != "" {
+		return value.BrokerClass, nil
+	}
+	if d.ClusterDefault != nil && d.ClusterDefault.BrokerClass != "" {
+		return d.ClusterDefault.BrokerClass, nil
+	}
+	return "", errors.New("Defaults for Broker Configurations have not been set up.")
 }
