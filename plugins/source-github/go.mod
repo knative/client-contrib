@@ -1,6 +1,6 @@
 module github.com/maximilien/kn-source-github
 
-go 1.13
+go 1.14
 
 require (
 	github.com/maximilien/kn-source-pkg v0.5.0
