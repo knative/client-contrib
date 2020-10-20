@@ -23,12 +23,9 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
-	KnDefaultTestImage string        = "gcr.io/knative-samples/helloworld-go"
 	MaxRetries         int           = 10
 	RetrySleepDuration time.Duration = 5 * time.Second
 )
@@ -46,13 +43,22 @@ type KnTest struct {
 
 // NewKnTest creates a new KnTest object
 func NewKnTest() (*KnTest, error) {
-	ns := NextNamespace()
-
-	err := CreateNamespace(ns)
-	if err != nil {
-		return nil, err
+	ns := ""
+	// try next 20 namespace before giving up creating a namespace if it already exists
+	for i := 0; i < 20; i++ {
+		ns = NextNamespace()
+		err := CreateNamespace(ns)
+		if err == nil {
+			break
+		}
+		if strings.Contains(err.Error(), "AlreadyExists") {
+			continue
+		} else {
+			return nil, err
+		}
 	}
-	err = WaitForNamespaceCreated(ns)
+
+	err := WaitForNamespaceCreated(ns)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +118,7 @@ func CreateNamespace(namespace string) error {
 	expectedOutputRegexp := fmt.Sprintf("namespace?.+%s.+created", namespace)
 	out, err := createNamespaceWithRetry(namespace, MaxRetries)
 	if err != nil {
-		return errors.Wrap(err, "could not create namespace "+namespace)
+		return fmt.Errorf("could not create namespace %s: %w", namespace, err)
 	}
 
 	// check that last output indeed show created namespace
@@ -131,7 +137,7 @@ func DeleteNamespace(namespace string) error {
 	kubectl := Kubectl{namespace}
 	out, err := kubectl.Run("delete", "namespace", namespace)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Cannot delete namespace %s", namespace))
+		return fmt.Errorf("Cannot delete namespace %s: %w", namespace, err)
 	}
 
 	expectedOutputRegexp := fmt.Sprintf("namespace?.+%s.+deleted", namespace)
@@ -217,7 +223,7 @@ func createNamespaceWithRetry(namespace string, maxRetries int) (string, error) 
 func matchRegexp(matchingRegexp, actual string) (bool, error) {
 	matched, err := regexp.MatchString(matchingRegexp, actual)
 	if err != nil {
-		return false, errors.Wrap(err, fmt.Sprintf("failed to match regexp '%s'", matchingRegexp))
+		return false, fmt.Errorf("failed to match regexp %q: %w", matchingRegexp, err)
 	}
 	return matched, nil
 }

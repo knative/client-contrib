@@ -40,6 +40,12 @@ type VolumeSourceType int
 const (
 	ConfigMapVolumeSourceType VolumeSourceType = iota
 	SecretVolumeSourceType
+	PortFormatErr = "the port specification '%s' is not valid. Please provide in the format 'NAME:PORT', where 'NAME' is optional. Examples: '--port h2c:8080' , '--port 8080'."
+)
+
+var (
+	UserImageAnnotationKey = "client.knative.dev/user-image"
+	ApiTooOldError         = errors.New("the service is using too old of an API format for the operation")
 )
 
 func (vt VolumeSourceType) String() string {
@@ -49,8 +55,6 @@ func (vt VolumeSourceType) String() string {
 	}
 	return names[vt]
 }
-
-var UserImageAnnotationKey = "client.knative.dev/user-image"
 
 // UpdateEnvVars gives the configuration all the env var values listed in the given map of
 // vars.  Does not touch any environment variables not mentioned, but it can add
@@ -225,15 +229,16 @@ func UpdateRevisionTemplateAnnotation(template *servingv1.RevisionTemplateSpec, 
 	// without changing the existing spec
 	in := make(map[string]string)
 	in[annotation] = value
-	if err := autoscaling.ValidateAnnotations(in); err != nil {
+	// The boolean indicates whether or not the init-scale annotation can be set to 0.
+	// Since we don't have the config handy, err towards allowing it. The API will
+	// correctly fail the request if it's forbidden.
+	if err := autoscaling.ValidateAnnotations(true, in); err != nil {
 		return err
 	}
 
 	annoMap[annotation] = value
 	return nil
 }
-
-var ApiTooOldError = errors.New("the service is using too old of an API format for the operation")
 
 // EnvToMap is an utility function to translate between the API list form of env vars, and the
 // more convenient map form.
@@ -302,8 +307,8 @@ func FreezeImageToDigest(template *servingv1.RevisionTemplateSpec, baseRevision 
 		return fmt.Errorf("could not freeze image to digest since current revision contains unexpected image")
 	}
 
-	if baseRevision.Status.ImageDigest != "" {
-		return UpdateImage(template, baseRevision.Status.ImageDigest)
+	if baseRevision.Status.DeprecatedImageDigest != "" {
+		return UpdateImage(template, baseRevision.Status.DeprecatedImageDigest)
 	}
 	return nil
 }
@@ -328,14 +333,34 @@ func UpdateContainerArg(template *servingv1.RevisionTemplateSpec, arg []string) 
 	return nil
 }
 
-// UpdateContainerPort updates container with a give port
-func UpdateContainerPort(template *servingv1.RevisionTemplateSpec, port int32) error {
+// UpdateContainerPort updates container with a given name:port
+func UpdateContainerPort(template *servingv1.RevisionTemplateSpec, port string) error {
 	container, err := ContainerOfRevisionTemplate(template)
 	if err != nil {
 		return err
 	}
+
+	var containerPort int64
+	var name string
+
+	elements := strings.SplitN(port, ":", 2)
+	if len(elements) == 2 {
+		name = elements[0]
+		containerPort, err = strconv.ParseInt(elements[1], 10, 32)
+		if err != nil {
+			return fmt.Errorf(PortFormatErr, port)
+		}
+	} else {
+		name = ""
+		containerPort, err = strconv.ParseInt(elements[0], 10, 32)
+		if err != nil {
+			return fmt.Errorf(PortFormatErr, port)
+		}
+	}
+
 	container.Ports = []corev1.ContainerPort{{
-		ContainerPort: port,
+		ContainerPort: int32(containerPort),
+		Name:          name,
 	}}
 	return nil
 }
@@ -352,8 +377,42 @@ func UpdateUser(template *servingv1.RevisionTemplateSpec, user int64) error {
 	return nil
 }
 
-// UpdateResources updates resources as requested
-func UpdateResources(template *servingv1.RevisionTemplateSpec, requestsResourceList corev1.ResourceList, limitsResourceList corev1.ResourceList) error {
+// UpdateResources updates container resources for given revision template
+func UpdateResources(template *servingv1.RevisionTemplateSpec, resources corev1.ResourceRequirements, requestsToRemove, limitsToRemove []string) error {
+	container, err := ContainerOfRevisionTemplate(template)
+	if err != nil {
+		return err
+	}
+
+	if container.Resources.Requests == nil {
+		container.Resources.Requests = corev1.ResourceList{}
+	}
+
+	for k, v := range resources.Requests {
+		container.Resources.Requests[k] = v
+	}
+
+	for _, reqToRemove := range requestsToRemove {
+		delete(container.Resources.Requests, corev1.ResourceName(reqToRemove))
+	}
+
+	if container.Resources.Limits == nil {
+		container.Resources.Limits = corev1.ResourceList{}
+	}
+
+	for k, v := range resources.Limits {
+		container.Resources.Limits[k] = v
+	}
+
+	for _, limToRemove := range limitsToRemove {
+		delete(container.Resources.Limits, corev1.ResourceName(limToRemove))
+	}
+
+	return nil
+}
+
+// UpdateResourcesDeprecated updates resources as requested
+func UpdateResourcesDeprecated(template *servingv1.RevisionTemplateSpec, requestsResourceList corev1.ResourceList, limitsResourceList corev1.ResourceList) error {
 	container, err := ContainerOfRevisionTemplate(template)
 	if err != nil {
 		return err
@@ -442,26 +501,44 @@ func UpdateImagePullSecrets(template *servingv1.RevisionTemplateSpec, pullsecret
 }
 
 // GenerateVolumeName generates a volume name with respect to a given path string.
-// Current implementation basically sanitizes the path string by changing "/" into "."
+// Current implementation basically sanitizes the path string by replacing "/" with "-"
 // To reduce any chance of duplication, a checksum part generated from the path string is appended to the sanitized string.
+// The volume name must follow the DNS label standard as defined in RFC 1123. This means the name must:
+// - contain at most 63 characters
+// - contain only lowercase alphanumeric characters or '-'
+// - start with an alphanumeric character
+// - end with an alphanumeric character
 func GenerateVolumeName(path string) string {
 	builder := &strings.Builder{}
 	for idx, r := range path {
 		switch {
-		case unicode.IsLower(r) || unicode.IsDigit(r) || r == '-' || r == '.':
+		case unicode.IsLower(r) || unicode.IsDigit(r) || r == '-':
 			builder.WriteRune(r)
 		case unicode.IsUpper(r):
 			builder.WriteRune(unicode.ToLower(r))
 		case r == '/':
 			if idx != 0 {
-				builder.WriteRune('.')
+				builder.WriteRune('-')
 			}
 		default:
 			builder.WriteRune('-')
 		}
 	}
 
-	return appendCheckSum(builder.String(), path)
+	vname := appendCheckSum(builder.String(), path)
+
+	// the name must start with an alphanumeric character
+	if !unicode.IsLetter(rune(vname[0])) && !unicode.IsNumber(rune(vname[0])) {
+		vname = fmt.Sprintf("k-%s", vname)
+	}
+
+	// contain at most 63 characters
+	if len(vname) > 63 {
+		// must end with an alphanumeric character
+		vname = fmt.Sprintf("%s-n", vname[0:61])
+	}
+
+	return vname
 }
 
 // =======================================================================================
@@ -743,8 +820,8 @@ func existsVolumeNameInVolumeMounts(volumeName string, volumeMounts []corev1.Vol
 	return false
 }
 
-func appendCheckSum(sanitiedString string, path string) string {
+func appendCheckSum(sanitizedString, path string) string {
 	checkSum := sha1.Sum([]byte(path))
 	shortCheckSum := checkSum[0:4]
-	return fmt.Sprintf("%s-%x", sanitiedString, shortCheckSum)
+	return fmt.Sprintf("%s-%x", sanitizedString, shortCheckSum)
 }

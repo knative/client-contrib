@@ -14,13 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package scripts is a placeholder that allows us to pull the shell scripts
+// via go mod vendor.
 package scripts
-
-import (
-	"fmt"
-)
-
-func main() {
-	fmt.Println("This is a dummy go file so `go dep` can be used with knative/test-infra/scripts")
-	fmt.Println("This file can be safely removed if one day this directory contains real, useful go code")
-}
