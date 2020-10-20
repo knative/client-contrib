@@ -33,6 +33,7 @@ const (
 	kafkaClusterName      = "my-cluster"
 	kafkaClusterNamespace = "kafka"
 	kafkaTopic            = "test-topic"
+	testImage             = "gcr.io/knative-samples/helloworld-go:latest"
 )
 
 type e2eTest struct {
@@ -107,7 +108,7 @@ func (et *e2eTest) knSourceKafkaDescribe(t *testing.T, r *test.KnRunResultCollec
 }
 
 func serviceCreate(r *test.KnRunResultCollector, serviceName string) {
-	out := r.KnTest().Kn().Run("service", "create", serviceName, "--image", test.KnDefaultTestImage)
+	out := r.KnTest().Kn().Run("service", "create", serviceName, "--image", testImage)
 	r.AssertNoError(out)
 	assert.Check(r.T(), util.ContainsAllIgnoreCase(out.Stdout, "service", serviceName, "creating", "namespace", r.KnTest().Kn().Namespace(), "ready"))
 }
