@@ -42,7 +42,7 @@ readonly KAFKA_CRD_CONFIG_TEMPLATE="400-kafka-config.yaml"
 # Real Kafka channel CRD config , generated from the template directory and modified template file.
 readonly KAFKA_CRD_CONFIG_DIR="$(mktemp -d)"
 # Kafka channel CRD config template directory.
-readonly KAFKA_SOURCE_CRD_YAML="https://github.com/knative/eventing-contrib/releases/download/v0.14.0/kafka-source.yaml"
+readonly KAFKA_SOURCE_CRD_YAML="https://github.com/knative/eventing-contrib/releases/download/v0.17.1/kafka-source.yaml"
 
 function kafka_setup() {
   echo "Installing Kafka cluster"
