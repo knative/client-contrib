@@ -84,7 +84,7 @@ kn source kafka create mykafkasrc --servers my-cluster-kafka-bootstrap.kafka.svc
   -h, --help                   help for create
   -n, --namespace string       Specify the namespace to operate in.
       --servers string         Kafka bootstrap servers that the consumer will connect to, consist of a hostname plus a port pair, e.g. my-kafka-bootstrap.kafka:9092
-  -s, --sink string            Addressable sink for events
+  -s, --sink string            Addressable sink for events. You can specify a broker, Knative service or URI. Examples: '--sink broker:nest' for a broker 'nest', '--sink https://event.receiver.uri' for an URI with an 'http://' or 'https://' schema, '--sink 'ksvc:receiver' or simply '--sink receiver' for a Knative service 'receiver'. If prefix is not provided, it is considered as a Knative service.
       --topics string          Topics to consume messages from
 ```
 

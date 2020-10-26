@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.62.0
+# cloud.google.com/go v0.65.0
 cloud.google.com/go/compute/metadata
 # github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
@@ -40,17 +40,19 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/btree v1.0.0
 github.com/google/btree
-# github.com/google/go-cmp v0.5.1
+# github.com/google/go-cmp v0.5.2
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/cmpopts
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-containerregistry v0.1.2-0.20200717224239-a84993334b27
+# github.com/google/go-containerregistry v0.1.2
 github.com/google/go-containerregistry/pkg/name
 # github.com/google/gofuzz v1.1.0
 github.com/google/gofuzz
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
 # github.com/googleapis/gnostic v0.4.0
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
@@ -140,7 +142,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# go.opencensus.io v0.22.4
+# go.opencensus.io v0.22.5-0.20200716030834-3456e1d174b2
 go.opencensus.io
 go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
@@ -169,9 +171,9 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200707034311-ab3426394381
+# golang.org/x/net v0.0.0-20200822124328-c89045814202
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -184,7 +186,7 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20200802091954-4b90ce9b60b3
+# golang.org/x/sys v0.0.0-20200828081204-131dc92a58d5
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -202,7 +204,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 golang.org/x/time/rate
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gomodules.xyz/jsonpatch/v2 v2.1.0
@@ -302,7 +304,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.18.7-rc.0 => k8s.io/apimachinery v0.17.6
+# k8s.io/apimachinery v0.19.0 => k8s.io/apimachinery v0.17.6
 ## explicit
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
 k8s.io/apimachinery/pkg/api/equality
@@ -564,7 +566,7 @@ knative.dev/client/pkg/sources/v1alpha2
 knative.dev/client/pkg/util
 knative.dev/client/pkg/util/mock
 knative.dev/client/pkg/wait
-# knative.dev/eventing v0.17.0
+# knative.dev/eventing v0.17.3-0.20200831120208-4051c5d96eda
 knative.dev/eventing/pkg/apis/config
 knative.dev/eventing/pkg/apis/configs
 knative.dev/eventing/pkg/apis/configs/v1alpha1
@@ -591,9 +593,13 @@ knative.dev/eventing/pkg/client/clientset/versioned/typed/messaging/v1beta1
 knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2
 knative.dev/eventing/pkg/client/clientset/versioned/typed/sources/v1alpha2/fake
 knative.dev/eventing/pkg/logging
-# knative.dev/eventing-contrib v0.14.0
+# knative.dev/eventing-contrib v0.17.1
 ## explicit
+knative.dev/eventing-contrib/kafka/source/pkg/apis/bindings
+knative.dev/eventing-contrib/kafka/source/pkg/apis/bindings/v1alpha1
+knative.dev/eventing-contrib/kafka/source/pkg/apis/bindings/v1beta1
 knative.dev/eventing-contrib/kafka/source/pkg/apis/sources/v1alpha1
+knative.dev/eventing-contrib/kafka/source/pkg/apis/sources/v1beta1
 knative.dev/eventing-contrib/kafka/source/pkg/client/clientset/versioned/scheme
 knative.dev/eventing-contrib/kafka/source/pkg/client/clientset/versioned/typed/sources/v1alpha1
 knative.dev/eventing-contrib/kafka/source/pkg/client/clientset/versioned/typed/sources/v1alpha1/fake
@@ -628,7 +634,7 @@ knative.dev/pkg/tracing/propagation
 knative.dev/pkg/tracing/propagation/tracecontextb3
 knative.dev/pkg/tracker
 knative.dev/pkg/webhook/resourcesemantics
-# knative.dev/serving v0.17.0
+# knative.dev/serving v0.17.1
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
 knative.dev/serving/pkg/apis/config
@@ -640,7 +646,7 @@ knative.dev/serving/pkg/autoscaler/config
 knative.dev/serving/pkg/client/clientset/versioned/scheme
 knative.dev/serving/pkg/client/clientset/versioned/typed/serving/v1
 knative.dev/serving/pkg/client/clientset/versioned/typed/serving/v1/fake
-# knative.dev/test-infra v0.0.0-20200825022047-cb4bb218c5e5
+# knative.dev/test-infra v0.0.0-20200828171708-f68cb78c80a9
 ## explicit
 knative.dev/test-infra/scripts
 # sigs.k8s.io/kustomize v2.0.3+incompatible

@@ -17,6 +17,7 @@ package factories
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"knative.dev/client-contrib/plugins/source-kafka/pkg/client"
 	"knative.dev/client-contrib/plugins/source-kafka/pkg/types"
@@ -203,10 +204,12 @@ func (f *kafkaSourceRunEFactory) DescribeRunE() sourcetypes.RunE {
 			return err
 		}
 
-		writeSink(dw, kafkaSource.Spec.Sink)
-		dw.WriteLine()
-		if err := dw.Flush(); err != nil {
-			return err
+		if kafkaSource.Spec.Sink != nil {
+			writeSink(dw, kafkaSource.Spec.Sink)
+			dw.WriteLine()
+			if err := dw.Flush(); err != nil {
+				return err
+			}
 		}
 
 		commands.WriteConditions(dw, kafkaSource.Status.Conditions, true)
@@ -219,11 +222,13 @@ func (f *kafkaSourceRunEFactory) DescribeRunE() sourcetypes.RunE {
 
 func writeSink(dw printers.PrefixWriter, sink *duckv1.Destination) {
 	subWriter := dw.WriteAttribute("Sink", "")
-	subWriter.WriteAttribute("Name", sink.Ref.Name)
-	subWriter.WriteAttribute("Namespace", sink.Ref.Namespace)
 	ref := sink.Ref
 	if ref != nil {
-		subWriter.WriteAttribute("Kind", fmt.Sprintf("%s (%s)", sink.Ref.Kind, sink.Ref.APIVersion))
+		subWriter.WriteAttribute("Name", sink.Ref.Name)
+		if sink.Ref.Namespace != "" {
+			subWriter.WriteAttribute("Namespace", sink.Ref.Namespace)
+		}
+		subWriter.WriteAttribute("Resource", fmt.Sprintf("%s (%s)", sink.Ref.Kind, sink.Ref.APIVersion))
 	}
 	uri := sink.URI
 	if uri != nil {
@@ -233,7 +238,7 @@ func writeSink(dw printers.PrefixWriter, sink *duckv1.Destination) {
 
 func writeKafkaSource(dw printers.PrefixWriter, source *v1alpha1.KafkaSource) {
 	commands.WriteMetadata(dw, &source.ObjectMeta, true)
-	dw.WriteAttribute("BootstrapServers", source.Spec.BootstrapServers)
-	dw.WriteAttribute("Topics", source.Spec.Topics)
+	dw.WriteAttribute("BootstrapServers", strings.Join(source.Spec.BootstrapServers, ", "))
+	dw.WriteAttribute("Topics", strings.Join(source.Spec.Topics, ","))
 	dw.WriteAttribute("ConsumerGroup", source.Spec.ConsumerGroup)
 }
