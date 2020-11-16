@@ -52,7 +52,7 @@ func TestUtils(t *testing.T) {
 				Namespace: "knative-serving",
 			},
 			Data: map[string]string{
-				"dummy.domain": "",
+				"test.domain": "",
 			},
 		}
 		client := k8sfake.NewSimpleClientset(oriCm)
@@ -71,7 +71,7 @@ func TestUtils(t *testing.T) {
 				Namespace: "knative-serving",
 			},
 			Data: map[string]string{
-				"dummy.domain": "",
+				"test.domain": "",
 			},
 		}
 		desiredCm := &corev1.ConfigMap{
@@ -80,7 +80,7 @@ func TestUtils(t *testing.T) {
 				Namespace: "knative-serving",
 			},
 			Data: map[string]string{
-				"dummy.domain": "",
+				"test.domain": "",
 			},
 		}
 		client := k8sfake.NewSimpleClientset(oriCm)

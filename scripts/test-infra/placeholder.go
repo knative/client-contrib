@@ -18,6 +18,6 @@ import (
 )
 
 func main() {
-	fmt.Println("This is a dummy go file so `go dep` can be used with knative/test-infra/scripts")
+	fmt.Println("This is a test go file so `go dep` can be used with knative/test-infra/scripts")
 	fmt.Println("This file can be safely removed if one day this directory contains real, useful go code")
 }
