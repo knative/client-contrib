@@ -4213,11 +4213,11 @@ spec:
                         type: boolean
                   topicsPattern:
                     type: string
-                  topicsBlacklistPattern:
+                  topicsBlacklistPattern: # wokeignore:rule=blacklist
                     type: string
                   groupsPattern:
                     type: string
-                  groupsBlacklistPattern:
+                  groupsBlacklistPattern: # wokeignore:rule=blacklist
                     type: string
                 required:
                 - sourceCluster
@@ -8203,7 +8203,7 @@ spec:
               minimum: 1
             image:
               type: string
-            whitelist:
+            whitelist: # wokeignore:rule=whitelist
               type: string
             consumer:
               type: object
@@ -9079,7 +9079,7 @@ spec:
               type: string
           required:
           - replicas
-          - whitelist
+          - whitelist # wokeignore:rule=whitelist
           - consumer
           - producer
         status:

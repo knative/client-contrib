@@ -20,5 +20,5 @@ import (
 	_ "knative.dev/test-infra/scripts"
 )
 
-func TestDummy(t *testing.T) {
+func Testtest(t *testing.T) {
 }

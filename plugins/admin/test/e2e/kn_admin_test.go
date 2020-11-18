@@ -168,7 +168,7 @@ func (et *e2eTest) restoreConfigMap(cm string) error {
 }
 
 func (et *e2eTest) knAdminDomain(t *testing.T, r *test.KnRunResultCollector) {
-	domain := "dummy.domain.test"
+	domain := "test.domain.test"
 	out := et.kn.Run(pluginName, "domain", "set", "--custom-domain", domain)
 	r.AssertNoError(out)
 	out = et.kn.Run(pluginName, "domain", "set", "--custom-domain", domain, "--selector", "app=v1")
@@ -178,9 +178,9 @@ func (et *e2eTest) knAdminDomain(t *testing.T, r *test.KnRunResultCollector) {
 }
 
 func (et *e2eTest) knAdminRegistry(t *testing.T, r *test.KnRunResultCollector) {
-	out := et.kn.Run(pluginName, "registry", "add", "--username", "custom-user", "--password", "dummy", "--server", "dummy.test.io")
+	out := et.kn.Run(pluginName, "registry", "add", "--username", "custom-user", "--password", "test", "--server", "test.test.io")
 	r.AssertNoError(out)
-	out = et.kn.Run(pluginName, "registry", "remove", "--username", "custom-user", "--server", "dummy.test.io")
+	out = et.kn.Run(pluginName, "registry", "remove", "--username", "custom-user", "--server", "test.test.io")
 	r.AssertNoError(out)
 }
 

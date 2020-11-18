@@ -267,7 +267,7 @@ func TestProfileDownload(t *testing.T) {
 			errChan <- d.Download(ProfileTypeHeap, output)
 		}()
 
-		e := fmt.Errorf("dummy connection error")
+		e := fmt.Errorf("test connection error")
 		d.errorCh <- e
 		var err error
 		err = <-errChan

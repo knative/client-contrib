@@ -37,7 +37,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 		_, err := testutil.ExecuteCommand(cmd, "--username", "")
 		assert.ErrorContains(t, err, "requires the registry username")
 
-		_, err = testutil.ExecuteCommand(cmd, "--username", "dummy", "--server", "")
+		_, err = testutil.ExecuteCommand(cmd, "--username", "test", "--server", "")
 		assert.ErrorContains(t, err, "requires the registry server")
 	})
 
@@ -58,7 +58,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			},
 			ImagePullSecrets: []corev1.LocalObjectReference{
 				{
-					Name: "dummy-secret",
+					Name: "test-secret",
 				},
 			},
 		}
@@ -78,7 +78,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dummy-secret",
+				Name:      "test-secret",
 				Namespace: "default",
 				Labels: map[string]string{
 					pkg.LabelManagedBy: AdminRegistryCmdName,
@@ -94,15 +94,15 @@ func TestNewRegistryRmCommand(t *testing.T) {
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'default' in namespace 'default' is updated"), "unexpected output: %s", o)
-		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'default' is deleted"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "Secret 'test-secret' in namespace 'default' is deleted"), "unexpected output: %s", o)
 
-		_, err = client.CoreV1().Secrets("default").Get("dummy-secret", metav1.GetOptions{})
+		_, err = client.CoreV1().Secrets("default").Get("test-secret", metav1.GetOptions{})
 		assert.ErrorContains(t, err, "not found")
 		saUpdated, err := client.CoreV1().ServiceAccounts("default").Get("default", metav1.GetOptions{})
 		assert.NilError(t, err)
 		isContain := false
 		for _, imagePullSecret := range saUpdated.ImagePullSecrets {
-			if imagePullSecret.Name == "dummy-secret" {
+			if imagePullSecret.Name == "test-secret" {
 				isContain = true
 				break
 			}
@@ -123,7 +123,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 			},
 			ImagePullSecrets: []corev1.LocalObjectReference{
 				{
-					Name: "dummy-secret",
+					Name: "test-secret",
 				},
 			},
 		}
@@ -143,7 +143,7 @@ func TestNewRegistryRmCommand(t *testing.T) {
 
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dummy-secret",
+				Name:      "test-secret",
 				Namespace: "custom-namespace",
 				Labels: map[string]string{
 					pkg.LabelManagedBy: AdminRegistryCmdName,
@@ -159,15 +159,15 @@ func TestNewRegistryRmCommand(t *testing.T) {
 		o, err := testutil.ExecuteCommand(cmd, "--username", "user", "--server", "docker.io", "--namespace", "custom-namespace", "--serviceaccount", "custom-serviceaccount")
 		assert.NilError(t, err)
 		assert.Check(t, strings.Contains(o, "ImagePullSecrets of serviceaccount 'custom-serviceaccount' in namespace 'custom-namespace' is updated"), "unexpected output: %s", o)
-		assert.Check(t, strings.Contains(o, "Secret 'dummy-secret' in namespace 'custom-namespace' is deleted"), "unexpected output: %s", o)
+		assert.Check(t, strings.Contains(o, "Secret 'test-secret' in namespace 'custom-namespace' is deleted"), "unexpected output: %s", o)
 
-		_, err = client.CoreV1().Secrets(ns.Name).Get("dummy-secret", metav1.GetOptions{})
+		_, err = client.CoreV1().Secrets(ns.Name).Get("test-secret", metav1.GetOptions{})
 		assert.ErrorContains(t, err, "not found")
 		saUpdated, err := client.CoreV1().ServiceAccounts(ns.Name).Get("custom-serviceaccount", metav1.GetOptions{})
 		assert.NilError(t, err)
 		isContain := false
 		for _, imagePullSecret := range saUpdated.ImagePullSecrets {
-			if imagePullSecret.Name == "dummy-secret" {
+			if imagePullSecret.Name == "test-secret" {
 				isContain = true
 				break
 			}
