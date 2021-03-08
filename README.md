@@ -1,7 +1,21 @@
+
+## Client-Contrib has been archived and is read-only.
+
+The client-contribs subprojects have been moved to the knative-sandbox organisation.
+
+Please refer to the following successor projects:
+
+* * kn-plugin-sample - An example plugin that can be used as blueprint for creating a plugin (_to be created_)
+* [kn-plugin-admin](https://github.com/knative-sandbox/kn-plugin-admin) - Plugin for managing all admin aspects
+* [kn-plugin-source-kafka](https://github.com/knative-sandbox/kn-plugin-source-kafka) - Managing a Kafka source with `kn`
+* kn-plugin-migration - Plugin for migrate a Knative installation
+
+-------------
+**Original README:**
+
 ## Knative Client Contributions
 
 This repository is the place for curated contributions for the [Knative client](https://github.com/knative/client), especially Knative plugins
-
 
 ### Plugins
 
