@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Copyright © 2020 The Knative Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+USAGE=$"Usage:
+  kn curl NAME
+
+Examples:
+  # Curl service hello
+  kn curl hello
+
+  # Curl service hello in namespace myns
+  kn curl hello -n myns
+
+  Flags:
+	-n, --namespace string             Specify the namespace to operate in.
+"
+
+# Need at least the service name
+if [ -z "$1" ]; then
+	echo "$USAGE"
+	exit 0
+fi
+
+# If -h or --help is first argument
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+  echo "$USAGE"
+  exit 0
+fi
+
+# Setup the service name
+SERVICE_NAME=$1
+
+# Flags
+N="-n"
+NAMESPACE="--namespace"
+NS="default"
+
+# Parse arguments for -n or --namespace and namespace value
+if [ "$N" == "$2" ] || [ "$NAMESPACE" == "$2" ]; then
+  NS="$3"
+fi
+
+# Get kubectl path
+KUBECTL=`which kubectl`
+if [ $? -ne 0 ]; then
+  echo "$USAGE"
+  echo "kubectl must also be in your PATH"
+  exit 0
+fi
+
+# Check istio is setup as ingress
+ISTIO_POD=$($KUBECTL get pods -n knative-serving | grep networking-istio | awk '{print $1}')
+if [ $? -ne 0 ]; then
+  echo "$USAGE"
+  echo "Knative must also be installed with Istio for this version."
+  exit 0
+fi
+
+# Get INGRESS assuming Istio
+INGRESS=$($KUBECTL get svc istio-ingressgateway --namespace istio-system | awk '{print $4}' | tail +2)
+
+# Check if the servcice's cluster-local is on
+CLUSTER_LOCAL=$($KUBECTL get ksvc $SERVICE_NAME --namespace $NS -o=jsonpath='{@.metadata.labels.serving\.knative\.dev\/visibility}')
+
+# Get URL for the service
+URL=$($KUBECTL get ksvc $SERVICE_NAME  --namespace $NS -o=jsonpath='{@.status.url}')
+
+# Perform curl of service either with CLUSTER_LOCAL or URL
+if [ -z "$CLUSTER_LOCAL" ]; then
+  echo "curl -sS $URL"
+  curl -sS $URL
+else
+  echo "curl -sS -H 'Host: $SERVICE_NAME.$NS.svc.cluster.local' http://$INGRESS"
+  curl -sS '-H' 'Host: '"$SERVICE_NAME"'.'"$NS"'.'svc.cluster.local'' http://"$INGRESS"
+fi
