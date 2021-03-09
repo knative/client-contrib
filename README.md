@@ -1,3 +1,7 @@
+
+NOTE: This repository is archived and its content has been moved to individual repositories in knative-sandbox.
+----------
+
 ## Knative Client Contributions
 
 This repository is the place for curated contributions for the [Knative client](https://github.com/knative/client), especially Knative plugins
