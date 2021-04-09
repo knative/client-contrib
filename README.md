@@ -1,3 +1,5 @@
+*NOTE* see https://githib.com/knative-sandbox for all knative client plugins and extensions
+
 ## Knative Client Contributions
 
 This repository is the place for curated contributions for the [Knative client](https://github.com/knative/client), especially Knative plugins
